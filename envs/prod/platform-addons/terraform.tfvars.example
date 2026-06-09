@@ -1,0 +1,21 @@
+# 공통 태그 및 이름 prefix
+team        = "team6"
+project     = "nowait"
+environment = "prod"
+name_prefix = "team6-nowait-prod"
+region      = "ap-northeast-2"
+
+# IAM Role 생성 시 필수 permissions boundary
+iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
+# Add-ons를 설치할 prod EKS Cluster 이름
+cluster_name = "team6-nowait-prod-eks"
+
+# 1차 platform-addons
+enable_aws_load_balancer_controller = true
+enable_argocd                       = true
+enable_metrics_server               = true
+enable_external_secrets             = true
+
+# 애플리케이션 배포 이후 2차 단계에서 true로 전환
+enable_kube_prometheus_stack = false
