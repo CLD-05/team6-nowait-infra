@@ -1,0 +1,213 @@
+# -------------------------------------------------------------------
+# 1. 일반 EKS Managed Add-ons 설치
+# -------------------------------------------------------------------
+#
+# 이 리소스는 EKS 기본 Add-ons를 설치합니다.
+#
+# 단, aws-ebs-csi-driver는 여기서 제외합니다.
+# 이유:
+# - aws-ebs-csi-driver는 AWS EBS 권한이 필요합니다.
+# - 권한 연결 없이 먼저 생성되면 ebs-csi-controller Pod가
+#   CrashLoopBackOff 상태가 될 수 있습니다.
+# - 그래서 아래에서 별도 aws_eks_addon 리소스로 분리하고,
+#   pod_identity_association을 add-on 생성 시점에 함께 설정합니다.
+#
+# 여기서 설치되는 일반 Add-ons:
+# - vpc-cni
+# - coredns
+# - kube-proxy
+# - eks-pod-identity-agent
+# -------------------------------------------------------------------
+resource "aws_eks_addon" "this" {
+  for_each = local.general_eks_addon_set
+
+  # Add-on을 설치할 대상 EKS Cluster 이름입니다.
+  cluster_name = var.cluster_name
+
+  # 설치할 Add-on 이름입니다.
+  # 예: vpc-cni, coredns, kube-proxy, eks-pod-identity-agent
+  addon_name = each.value
+
+  # Add-on 버전입니다.
+  #
+  # var.addon_versions에 값이 있으면 해당 버전으로 고정합니다.
+  # 값이 없으면 null이 들어가며, AWS/EKS가 클러스터 버전에 맞는
+  # 기본 호환 버전을 선택합니다.
+  addon_version = lookup(var.addon_versions, each.value, null)
+
+  # 생성 시 충돌이 나면 Terraform 설정 기준으로 덮어씁니다.
+  #
+  # 처음 생성할 때는 Terraform이 기준이 되는 것이 안전합니다.
+  resolve_conflicts_on_create = "OVERWRITE"
+
+  # 업데이트 시에는 기존 설정을 최대한 보존합니다.
+  #
+  # 운영 중 수동 변경 사항이 있을 수 있으므로 update에서는 PRESERVE를 사용합니다.
+  resolve_conflicts_on_update = "PRESERVE"
+
+  tags = {
+    Name = "${var.cluster_name}-${each.value}"
+  }
+}
+
+# -------------------------------------------------------------------
+# 2. EBS CSI Driver용 Pod Identity IAM Role 생성
+# -------------------------------------------------------------------
+#
+# aws-ebs-csi-driver는 Kubernetes PVC 요청을 실제 AWS EBS Volume으로
+# 생성/삭제/연결하는 역할을 합니다.
+#
+# 예:
+# - Grafana PVC
+# - Prometheus PVC
+# - 애플리케이션 PVC
+#
+# 이 작업을 하려면 AWS EBS API를 호출할 권한이 필요합니다.
+# 따라서 EBS CSI Driver Pod가 사용할 IAM Role을 생성합니다.
+#
+# count 조건:
+# - var.eks_addons 안에 "aws-ebs-csi-driver"가 포함되어 있고
+# - enable_ebs_csi_pod_identity가 true일 때만 생성합니다.
+#
+# 개인 계정 테스트:
+# - iam_role_permissions_boundary = "arn:aws:iam::aws:policy/AdministratorAccess"
+#
+# 학원 계정:
+# - iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+# -------------------------------------------------------------------
+resource "aws_iam_role" "ebs_csi" {
+  count = local.enable_ebs_csi_driver && var.enable_ebs_csi_pod_identity ? 1 : 0
+
+  name = "${var.name_prefix}-ebs-csi-role"
+
+  # IAM Role의 최대 권한 범위를 제한하는 permissions boundary입니다.
+  #
+  # 학원 계정에서는 TeamRuntimeBoundary가 필수입니다.
+  # 개인 계정 테스트에서는 유효한 boundary ARN을 넣어야 합니다.
+  permissions_boundary = var.iam_role_permissions_boundary
+
+  # EKS Pod Identity용 trust policy입니다.
+  #
+  # 일반 EC2 Role이면 Principal이 ec2.amazonaws.com이지만,
+  # Pod Identity Role은 pods.eks.amazonaws.com을 사용합니다.
+  #
+  # 즉, 이 Role은 EKS Pod Identity가 Assume할 수 있는 Role입니다.
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-ebs-csi-role"
+  }
+}
+
+# -------------------------------------------------------------------
+# 3. EBS CSI Driver IAM Role에 EBS 관리 정책 연결
+# -------------------------------------------------------------------
+#
+# IAM Role만 만들면 아직 아무 권한이 없습니다.
+#
+# AmazonEBSCSIDriverPolicy를 연결해야 EBS CSI Driver가
+# EBS Volume을 생성/삭제/Attach/Detach 할 수 있습니다.
+#
+# 이 정책은 AWS 관리형 정책입니다.
+# -------------------------------------------------------------------
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  count = local.enable_ebs_csi_driver && var.enable_ebs_csi_pod_identity ? 1 : 0
+
+  role = aws_iam_role.ebs_csi[0].name
+
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+# -------------------------------------------------------------------
+# 4. EBS CSI Driver Add-on 별도 설치
+# -------------------------------------------------------------------
+#
+# aws-ebs-csi-driver는 일반 Add-on 반복 생성 대상에서 제외하고
+# 별도 리소스로 생성합니다.
+#
+# 이유:
+# - EBS CSI Driver는 AWS EBS 권한이 필요합니다.
+# - 기존처럼 add-on을 먼저 만들고, Pod Identity Association을 나중에 만들면
+#   ebs-csi-controller Pod가 권한 없이 먼저 떠서 CrashLoopBackOff가 날 수 있습니다.
+#
+# 개선 방식:
+# - aws_eks_addon 리소스 내부의 pod_identity_association 블록을 사용합니다.
+# - add-on 생성 시점에 ebs-csi-controller-sa ServiceAccount와 IAM Role 연결 정보를
+#   함께 전달합니다.
+#
+# 연결 구조:
+#
+# kube-system/ebs-csi-controller-sa
+#   ↓
+# Pod Identity Association
+#   ↓
+# team6-nowait-dev-ebs-csi-role
+#   ↓
+# AmazonEBSCSIDriverPolicy
+#   ↓
+# AWS EBS Volume 생성/삭제/연결 가능
+# -------------------------------------------------------------------
+resource "aws_eks_addon" "ebs_csi" {
+  count = local.enable_ebs_csi_driver ? 1 : 0
+
+  cluster_name = var.cluster_name
+  addon_name   = "aws-ebs-csi-driver"
+
+  # EBS CSI Driver Add-on 버전입니다.
+  #
+  # addon_versions에 "aws-ebs-csi-driver" 값이 있으면 해당 버전 사용.
+  # 없으면 AWS/EKS 기본 호환 버전을 사용합니다.
+  addon_version = lookup(var.addon_versions, "aws-ebs-csi-driver", null)
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
+
+  # EBS CSI Driver에 Pod Identity 연결 정보를 함께 전달합니다.
+  #
+  # enable_ebs_csi_pod_identity = true일 때만 생성됩니다.
+  #
+  # service_account:
+  # - EBS CSI Driver Controller가 사용하는 ServiceAccount 이름입니다.
+  #
+  # role_arn:
+  # - 위에서 만든 EBS CSI Driver용 IAM Role ARN입니다.
+  dynamic "pod_identity_association" {
+    for_each = var.enable_ebs_csi_pod_identity ? [1] : []
+
+    content {
+      service_account = local.ebs_csi_service_account
+      role_arn        = aws_iam_role.ebs_csi[0].arn
+    }
+  }
+
+  # 의존성:
+  #
+  # 1. 일반 Add-ons가 먼저 설치되어야 합니다.
+  #    특히 eks-pod-identity-agent가 먼저 있어야 Pod Identity를 사용할 수 있습니다.
+  #
+  # 2. EBS CSI IAM Role에 AmazonEBSCSIDriverPolicy가 먼저 연결되어야 합니다.
+  #
+  # 그 다음 aws-ebs-csi-driver Add-on을 생성합니다.
+  depends_on = [
+    aws_eks_addon.this,
+    aws_iam_role_policy_attachment.ebs_csi
+  ]
+
+  tags = {
+    Name = "${var.cluster_name}-aws-ebs-csi-driver"
+  }
+}
