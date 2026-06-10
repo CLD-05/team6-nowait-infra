@@ -112,3 +112,10 @@ cloudfront_enabled      = false
 
 # Dev 로그 보관 기간
 log_retention_days = 7
+
+# ECR Repository 목록
+# 서비스별 이미지를 분리하여 관리합니다.
+ecr_repositories = [
+  "backend",
+  "frontend"
+]

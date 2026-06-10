@@ -278,3 +278,56 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+# 생성할 ECR Repository 이름 목록입니다.
+# name_prefix와 조합되어 실제 Repository 이름이 결정됩니다.
+# 예:
+# ecr_repositories = ["backend", "frontend"]
+# → team6-nowait-dev-backend
+# → team6-nowait-dev-frontend
+variable "ecr_repositories" {
+  description = "List of ECR repository names to create"
+  type        = list(string)
+}
+
+# 이미지 태그 변경 가능 여부입니다.
+# dev:  MUTABLE  (latest 태그 재사용 가능)
+# prod: IMMUTABLE (이미지 덮어쓰기 방지)
+variable "ecr_image_tag_mutability" {
+  description = "Image tag mutability setting (MUTABLE | IMMUTABLE)"
+  type        = string
+  default     = "MUTABLE"
+}
+
+# 이미지 push 시 자동 취약점 스캔 여부입니다.
+variable "ecr_scan_on_push" {
+  description = "Enable image vulnerability scan on push"
+  type        = bool
+  default     = true
+}
+
+# Lifecycle Policy 활성화 여부입니다.
+# 오래된 이미지를 자동 정리하여 ECR 스토리지 비용을 절감합니다.
+variable "ecr_lifecycle_policy_enabled" {
+  description = "Enable ECR lifecycle policy"
+  type        = bool
+  default     = true
+}
+
+# 보관할 최대 이미지 수입니다.
+# 이 수를 초과하면 오래된 이미지부터 자동 삭제됩니다.
+# dev:  30 (기본값)
+# prod: 50~100 권장
+variable "ecr_max_image_count" {
+  description = "Maximum number of images to keep per repository"
+  type        = number
+  default     = 30
+}
+
+# 태그 없는 이미지 보관 기간입니다 (일 단위).
+# 이 기간이 지난 untagged 이미지는 자동으로 삭제됩니다.
+variable "ecr_untagged_image_days" {
+  description = "Days to retain untagged images before deletion"
+  type        = number
+  default     = 7
+}

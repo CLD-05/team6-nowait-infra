@@ -75,3 +75,27 @@ output "eks_node_group_name" {
   value = module.eks.node_group_name
 }
 
+# ----------------------------------------
+# module "ecr" 활성화 이후 추가
+# ----------------------------------------
+
+# Repository 이름 맵입니다.
+# key: 짧은 이름 / value: 전체 Repository 이름
+output "ecr_repository_names" {
+  description = "Map of ECR repository names"
+  value       = module.ecr.repository_names
+}
+
+# Repository URL 맵입니다.
+# CI/CD 파이프라인에서 docker push 주소로 사용합니다.
+output "ecr_repository_urls" {
+  description = "Map of ECR repository URLs"
+  value       = module.ecr.repository_urls
+}
+
+# Repository ARN 맵입니다.
+# IAM Policy에서 ECR 접근 권한 부여 시 사용합니다.
+output "ecr_repository_arns" {
+  description = "Map of ECR repository ARNs"
+  value       = module.ecr.repository_arns
+}

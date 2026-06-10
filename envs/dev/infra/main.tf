@@ -62,3 +62,30 @@ module "eks" {
   developer_principal_arns = var.developer_principal_arns
   viewer_principal_arns    = var.viewer_principal_arns
 }
+
+# ========================================
+# ECR
+# Repository / Lifecycle Policy
+# ========================================
+module "ecr" {
+  source = "../../../modules/ecr"
+
+  name_prefix = var.name_prefix
+
+  # 생성할 Repository 목록
+  # tfvars에서 서비스별 이름을 지정합니다.
+  repositories = var.ecr_repositories
+
+  # 이미지 태그 설정
+  # dev: MUTABLE (latest 태그 재사용 가능)
+  image_tag_mutability = var.ecr_image_tag_mutability
+
+  # push 시 자동 취약점 스캔
+  scan_on_push = var.ecr_scan_on_push
+
+  # Lifecycle Policy
+  # 오래된 이미지 자동 정리
+  lifecycle_policy_enabled = var.ecr_lifecycle_policy_enabled
+  max_image_count          = var.ecr_max_image_count
+  untagged_image_days      = var.ecr_untagged_image_days
+}
