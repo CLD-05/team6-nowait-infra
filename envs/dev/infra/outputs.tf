@@ -55,24 +55,30 @@ output "nat_gateway_ids" {
 # module "eks" 활성화 이후 추가
 # ----------------------------------------
 
+
 output "eks_cluster_name" {
-  value = module.eks.cluster_name
+  description = "EKS Cluster 이름"
+  value       = module.eks.cluster_name
 }
 
 output "eks_cluster_endpoint" {
-  value = module.eks.cluster_endpoint
+  description = "EKS Cluster API Server Endpoint"
+  value       = module.eks.cluster_endpoint
 }
 
 output "eks_cluster_security_group_id" {
-  value = module.eks.cluster_security_group_id
+  description = "실제 EKS Cluster Security Group ID"
+  value       = module.eks.cluster_security_group_id
 }
 
 output "eks_node_security_group_id" {
-  value = module.eks.node_security_group_id
+  description = "RDS/Redis 접근 허용 source로 사용하는 실제 EKS Security Group ID"
+  value       = module.eks.node_security_group_id
 }
 
 output "eks_node_group_name" {
-  value = module.eks.node_group_name
+  description = "EKS Managed Node Group 이름"
+  value       = module.eks.node_group_name
 }
 
 # ----------------------------------------
@@ -90,7 +96,7 @@ output "redis_security_group_id" {
 }
 
 output "bastion_security_group_id" {
-  description = "Bastion Security Group ID"
+  description = "Bastion Security Group ID. bastion이 비활성화되면 null입니다."
   value       = module.sg.bastion_security_group_id
 }
 
