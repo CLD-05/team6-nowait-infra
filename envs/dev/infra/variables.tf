@@ -235,6 +235,13 @@ variable "redis_automatic_failover" {
   description = "Enable Redis automatic failover"
   type        = bool
 }
+# Redis 스냅샷 보관 기간입니다.
+# dev는 0 (비활성), prod는 7 이상을 권장합니다.
+variable "redis_snapshot_retention_limit" {
+  description = "Redis snapshot retention days. 0 = disabled."
+  type        = number
+  default     = 0
+}
 
 # Bastion 생성 여부입니다.
 variable "bastion_enabled" {

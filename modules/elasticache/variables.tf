@@ -22,10 +22,9 @@ variable "private_db_subnet_ids" {
   type        = list(string)
 }
 
-# EKS Node Security Group ID입니다.
-# ElastiCache 인바운드 규칙에서 EKS 노드만 허용하기 위해 사용합니다.
-variable "eks_node_security_group_id" {
-  description = "EKS node security group ID"
+# modules/sg에서 생성한 Redis Security Group ID입니다.
+variable "security_group_id" {
+  description = "Redis security group ID from modules/sg"
   type        = string
 }
 

@@ -18,9 +18,3 @@ output "port" {
   description = "Redis port"
   value       = 6379
 }
-
-# Redis Security Group ID입니다.
-output "security_group_id" {
-  description = "ElastiCache Redis security group ID"
-  value       = aws_security_group.redis.id
-}

@@ -1,36 +1,4 @@
 # ----------------------------------------
-# ElastiCache Security Group
-# ----------------------------------------
-#
-# EKS 노드에서만 Redis 6379 포트 접근을 허용합니다.
-# 외부 인터넷에서는 접근할 수 없습니다.
-resource "aws_security_group" "redis" {
-  name        = local.security_group_name
-  description = "Allow Redis access from EKS nodes only"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description     = "Redis from EKS nodes"
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [var.eks_node_security_group_id]
-  }
-
-  egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = local.security_group_name
-  }
-}
-
-# ----------------------------------------
 # ElastiCache Subnet Group
 # ----------------------------------------
 #
@@ -56,7 +24,7 @@ resource "aws_elasticache_subnet_group" "this" {
 # prod: replica_count = 1, multi_az = true, automatic_failover = true
 resource "aws_elasticache_replication_group" "this" {
   replication_group_id = local.replication_group_id
-  description          = "NoWait Redis — ${var.name_prefix}"
+  description          = "NoWait Redis - ${var.name_prefix}"
 
   engine         = "redis"
   engine_version = var.engine_version
@@ -67,8 +35,10 @@ resource "aws_elasticache_replication_group" "this" {
   # replica_count >= 1이면 primary 1개 + replica N개가 생성됩니다.
   num_cache_clusters = var.replica_count + 1
 
-  subnet_group_name  = aws_elasticache_subnet_group.this.name
-  security_group_ids = [aws_security_group.redis.id]
+  subnet_group_name = aws_elasticache_subnet_group.this.name
+
+  # modules/sg에서 생성한 Redis SG를 사용합니다.
+  security_group_ids = [var.security_group_id]
 
   # Multi-AZ 설정입니다.
   # replica_count >= 1일 때만 의미가 있습니다.
@@ -85,8 +55,6 @@ resource "aws_elasticache_replication_group" "this" {
   maintenance_window       = var.maintenance_window
   snapshot_retention_limit = var.snapshot_retention_limit
 
-  # 운영 중 삭제 방지는 환경별 tfvars에서 제어합니다.
-  # dev는 false, prod는 true 권장합니다.
   apply_immediately = true
 
   tags = {
