@@ -99,6 +99,15 @@ variable "nat_gateway_mode" {
   }
 }
 
+
+# EKS Kubernetes 버전입니다.
+# 이번 프로젝트에서는 1.34로 고정합니다.
+variable "eks_cluster_version" {
+  description = "EKS Kubernetes version"
+  type        = string
+  default     = "1.34"
+}
+
 # EKS Managed Node Group의 desired size입니다.
 variable "node_desired_size" {
   description = "EKS managed node group desired size"

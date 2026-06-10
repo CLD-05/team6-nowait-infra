@@ -54,22 +54,24 @@ output "nat_gateway_ids" {
 # ----------------------------------------
 # module "eks" 활성화 이후 추가
 # ----------------------------------------
-# output "cluster_name" {
-#   description = "EKS 클러스터 이름 (담당자 C platform-addons에서 참조)"
-#   value       = module.eks.cluster_name
-# }
 
-# output "cluster_endpoint" {
-#   description = "EKS API Server 엔드포인트 (담당자 C kubernetes provider에서 참조)"
-#   value       = module.eks.cluster_endpoint
-# }
+output "eks_cluster_name" {
+  value = module.eks.cluster_name
+}
 
-# output "cluster_certificate_authority_data" {
-#   description = "EKS 클러스터 CA 인증서 (담당자 C kubernetes provider에서 참조)"
-#   value       = module.eks.cluster_certificate_authority_data
-# }
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
 
-# output "node_group_role_arn" {
-#   description = "EKS Node Group IAM Role ARN (담당자 C Pod Identity에서 참조)"
-#   value       = module.eks.node_group_role_arn
-# }
+output "eks_cluster_security_group_id" {
+  value = module.eks.cluster_security_group_id
+}
+
+output "eks_node_security_group_id" {
+  value = module.eks.node_security_group_id
+}
+
+output "eks_node_group_name" {
+  value = module.eks.node_group_name
+}
+
