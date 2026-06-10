@@ -22,3 +22,9 @@ variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string
 }
+
+variable "bastion_enabled" {
+  description = "Enable bastion security group. prod only."
+  type        = bool
+  default     = false
+}

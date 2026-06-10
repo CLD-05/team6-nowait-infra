@@ -38,6 +38,7 @@ module "sg" {
   name_prefix = var.name_prefix
   vpc_id      = module.network.vpc_id
   vpc_cidr    = var.vpc_cidr
+  bastion_enabled = false  # dev는 false, prod는 true
 }
 
 # ========================================

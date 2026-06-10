@@ -20,5 +20,5 @@ output "redis_security_group_id" {
 
 output "bastion_security_group_id" {
   description = "Bastion Security Group ID"
-  value       = aws_security_group.bastion.id
+  value = var.bastion_enabled ? aws_security_group.bastion[0].id : null
 }

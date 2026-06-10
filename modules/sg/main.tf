@@ -147,6 +147,7 @@ resource "aws_security_group" "redis" {
 # prod 환경에서만 사용합니다.
 # ----------------------------------------
 resource "aws_security_group" "bastion" {
+  count = var.bastion_enabled ? 1 : 0
   name        = "${var.name_prefix}-bastion-sg"
   description = "Bastion SG - SSM only, no SSH inbound"
   vpc_id      = var.vpc_id
