@@ -94,7 +94,7 @@ variable "nat_gateway_mode" {
   default     = "single"
 
   validation {
-    condition     = contains(["single", "per_az"], var.nat_gateway_mode)
+    condition     = contains(["single", "per_az", "none"], var.nat_gateway_mode)
     error_message = "nat_gateway_mode must be one of: single, per_az, none."
   }
 }

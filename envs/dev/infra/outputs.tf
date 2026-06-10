@@ -28,12 +28,12 @@ output "iam_role_permissions_boundary" {
 # module "network" 활성화 이후 추가
 # ----------------------------------------
 output "vpc_id" {
-  description = "생성된 VPC ID (담당자 B가 RDS, Redis, Bastion에서 참조)"
+  description = "생성된 VPC ID "
   value       = module.network.vpc_id
 }
 
 output "public_subnet_ids" {
-  description = "Public Subnet ID 목록 (담당자 B Bastion, 담당자 C ALB에서 참조)"
+  description = "Public Subnet ID 목록"
   value       = module.network.public_subnet_ids
 }
 
@@ -43,30 +43,33 @@ output "private_app_subnet_ids" {
 }
 
 output "private_db_subnet_ids" {
-  description = "Private DB Subnet ID 목록 (담당자 B RDS, Redis에서 참조)"
+  description = "Private DB Subnet ID 목록"
   value       = module.network.private_db_subnet_ids
 }
 
+output "nat_gateway_ids" {
+  value = module.network.nat_gateway_ids
+}
 
 # ----------------------------------------
 # module "eks" 활성화 이후 추가
 # ----------------------------------------
-output "cluster_name" {
-  description = "EKS 클러스터 이름 (담당자 C platform-addons에서 참조)"
-  value       = module.eks.cluster_name
-}
+# output "cluster_name" {
+#   description = "EKS 클러스터 이름 (담당자 C platform-addons에서 참조)"
+#   value       = module.eks.cluster_name
+# }
 
-output "cluster_endpoint" {
-  description = "EKS API Server 엔드포인트 (담당자 C kubernetes provider에서 참조)"
-  value       = module.eks.cluster_endpoint
-}
+# output "cluster_endpoint" {
+#   description = "EKS API Server 엔드포인트 (담당자 C kubernetes provider에서 참조)"
+#   value       = module.eks.cluster_endpoint
+# }
 
-output "cluster_certificate_authority_data" {
-  description = "EKS 클러스터 CA 인증서 (담당자 C kubernetes provider에서 참조)"
-  value       = module.eks.cluster_certificate_authority_data
-}
+# output "cluster_certificate_authority_data" {
+#   description = "EKS 클러스터 CA 인증서 (담당자 C kubernetes provider에서 참조)"
+#   value       = module.eks.cluster_certificate_authority_data
+# }
 
-output "node_group_role_arn" {
-  description = "EKS Node Group IAM Role ARN (담당자 C Pod Identity에서 참조)"
-  value       = module.eks.node_group_role_arn
-}
+# output "node_group_role_arn" {
+#   description = "EKS Node Group IAM Role ARN (담당자 C Pod Identity에서 참조)"
+#   value       = module.eks.node_group_role_arn
+# }
