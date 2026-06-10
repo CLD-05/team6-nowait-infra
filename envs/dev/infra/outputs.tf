@@ -78,15 +78,6 @@ output "eks_node_group_name" {
 # ----------------------------------------
 # module "sg" 활성화 이후 추가
 # ----------------------------------------
-output "alb_security_group_id" {
-  description = "ALB Security Group ID"
-  value       = module.sg.alb_security_group_id
-}
-
-output "eks_node_sg_id" {
-  description = "EKS Node Security Group ID"
-  value       = module.sg.eks_node_security_group_id
-}
 
 output "rds_security_group_id" {
   description = "RDS Security Group ID"
@@ -96,6 +87,11 @@ output "rds_security_group_id" {
 output "redis_security_group_id" {
   description = "Redis Security Group ID"
   value       = module.sg.redis_security_group_id
+}
+
+output "bastion_security_group_id" {
+  description = "Bastion Security Group ID"
+  value       = module.sg.bastion_security_group_id
 }
 
 # ----------------------------------------
