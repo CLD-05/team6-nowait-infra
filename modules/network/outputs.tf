@@ -1,14 +1,22 @@
 # ----------------------------------------
+# AZ
+# ----------------------------------------
+output "availability_zones" {
+  description = "Availability zones used by this network"
+  value       = var.availability_zones
+}
+
+# ----------------------------------------
 # VPC
 # ----------------------------------------
 output "vpc_id" {
   description = "생성된 VPC ID"
-  value       = aws_vpc.main.id
+  value       = aws_vpc.this.id
 }
 
 output "vpc_cidr_block" {
   description = "VPC CIDR 블록"
-  value       = aws_vpc.main.cidr_block
+  value       = aws_vpc.this.cidr_block
 }
 
 # ----------------------------------------
@@ -30,11 +38,29 @@ output "private_db_subnet_ids" {
 }
 
 # ----------------------------------------
+# Route Table IDs
+# ----------------------------------------
+output "public_route_table_id" {
+  description = "Public Route Table ID"
+  value       = aws_route_table.public.id
+}
+
+output "private_app_route_table_ids" {
+  description = "Private App Route Table IDs"
+  value       = aws_route_table.private_app[*].id
+}
+
+output "private_db_route_table_id" {
+  description = "Private DB Route Table ID"
+  value       = aws_route_table.private_db.id
+}
+
+# ----------------------------------------
 # NAT Gateway
 # ----------------------------------------
 output "nat_gateway_ids" {
   description = "NAT Gateway ID 목록"
-  value       = aws_nat_gateway.main[*].id
+  value       = aws_nat_gateway.this[*].id
 }
 
 output "nat_public_ips" {

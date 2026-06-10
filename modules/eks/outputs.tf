@@ -1,36 +1,57 @@
-# ----------------------------------------
-# EKS Cluster
-# ----------------------------------------
-
-# platform-addons에서 EKS Add-ons, Helm 설치 시 클러스터 이름 참조
+# EKS Cluster 이름입니다.
 output "cluster_name" {
-  description = "EKS 클러스터 이름"
-  value       = aws_eks_cluster.main.name
+  description = "EKS Cluster name"
+  value       = aws_eks_cluster.this.name
 }
 
-# kubernetes provider 설정 시 API Server 주소로 사용
+# EKS Cluster ARN입니다.
+output "cluster_arn" {
+  description = "EKS Cluster ARN"
+  value       = aws_eks_cluster.this.arn
+}
+
+# EKS API Server endpoint입니다.
 output "cluster_endpoint" {
-  description = "EKS API Server 엔드포인트"
-  value       = aws_eks_cluster.main.endpoint
+  description = "EKS API Server endpoint"
+  value       = aws_eks_cluster.this.endpoint
 }
 
-# kubernetes provider 설정 시 클러스터 인증에 사용
+# EKS Cluster CA data입니다.
+# Kubernetes/Helm provider 설정에서 사용할 수 있습니다.
 output "cluster_certificate_authority_data" {
-  description = "EKS 클러스터 CA 인증서 (base64)"
-  value       = aws_eks_cluster.main.certificate_authority[0].data
+  description = "EKS Cluster CA data"
+  value       = aws_eks_cluster.this.certificate_authority[0].data
 }
 
-output "cluster_version" {
-  description = "EKS Kubernetes 버전"
-  value       = aws_eks_cluster.main.version
+# EKS Cluster Security Group ID입니다.
+output "cluster_security_group_id" {
+  description = "EKS Cluster Security Group ID"
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
 }
 
-# ----------------------------------------
-# IAM Role
-# ----------------------------------------
+# Node Security Group ID입니다.
+#
+# 단순화를 위해 cluster_security_group_id를 같이 내보냅니다.
+# 이후 RDS/Redis 접근 허용 source security group으로 사용할 수 있습니다.
+output "node_security_group_id" {
+  description = "Security Group ID used for EKS node communication"
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
 
-# 담당자 C가 Pod Identity Association 연결 시 사용
-output "node_group_role_arn" {
-  description = "EKS Node Group IAM Role ARN (platform-addons에서 Pod Identity 연결 시 사용)"
-  value       = aws_iam_role.eks_node.arn
+# Node Group 이름입니다.
+output "node_group_name" {
+  description = "EKS Managed Node Group name"
+  value       = aws_eks_node_group.main.node_group_name
+}
+
+# EKS Cluster IAM Role ARN입니다.
+output "cluster_role_arn" {
+  description = "EKS Cluster IAM Role ARN"
+  value       = aws_iam_role.cluster.arn
+}
+
+# EKS Node IAM Role ARN입니다.
+output "node_role_arn" {
+  description = "EKS Node IAM Role ARN"
+  value       = aws_iam_role.node.arn
 }
