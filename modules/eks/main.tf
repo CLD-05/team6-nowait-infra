@@ -21,9 +21,9 @@ resource "aws_iam_role" "cluster" {
     ]
   })
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-eks-cluster-role"
-  }
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_policy" {
@@ -38,9 +38,9 @@ resource "aws_cloudwatch_log_group" "cluster" {
   name              = "/aws/eks/${local.cluster_name}/cluster"
   retention_in_days = var.log_retention_days
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "/aws/eks/${local.cluster_name}/cluster"
-  }
+  })
 }
 
 
@@ -78,9 +78,9 @@ resource "aws_eks_cluster" "this" {
     public_access_cidrs = var.public_access_cidrs
   }
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = local.cluster_name
-  }
+  })
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster_policy,
@@ -111,9 +111,9 @@ resource "aws_iam_role" "node" {
     ]
   })
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-eks-node-role"
-  }
+  })
 }
 
 # EKS Node가 EKS Control Plane과 통신하는 권한
@@ -163,9 +163,9 @@ resource "aws_eks_node_group" "main" {
     role = "app"
   }
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-main-ng"
-  }
+  })
 
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,

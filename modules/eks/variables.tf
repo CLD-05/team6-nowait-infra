@@ -1,3 +1,10 @@
+# 공통 태그
+variable "common_tags" {
+  description = "Common tags applied to all resources"
+  type        = map(string)
+  default     = {}
+}
+
 # 리소스 이름 앞에 붙일 공통 prefix입니다.
 # 예:
 # dev  = team6-nowait-dev

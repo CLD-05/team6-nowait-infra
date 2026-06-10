@@ -6,9 +6,9 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = var.enable_dns_hostnames
   enable_dns_support   = var.enable_dns_support
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-vpc"
-  }
+  })
 }
 
 # ========================================
@@ -17,9 +17,9 @@ resource "aws_vpc" "this" {
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-igw"
-  }
+  })
 }
 
 # ========================================
@@ -40,15 +40,15 @@ resource "aws_subnet" "public" {
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
-  tags = {
+   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-${count.index + 1}"
 
     # AWS Load Balancer Controller가 internet-facing ALB용 Public Subnet을 찾을 때 사용
-    "kubernetes.io/role/elb" = "1"
-
-    # 해당 EKS Cluster에서 사용할 수 있는 subnet이라는 표시
+    "kubernetes.io/role/elb"                       = "1"
+   # 해당 EKS Cluster에서 사용할 수 있는 subnet이라는 표시
     "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
-  }
+  })
+
 }
 
 # ========================================
@@ -69,15 +69,12 @@ resource "aws_subnet" "private_app" {
   cidr_block        = var.private_app_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-app-${count.index + 1}"
 
-    # AWS Load Balancer Controller가 internal LB용 Private Subnet을 찾을 때 사용
-    "kubernetes.io/role/internal-elb" = "1"
-
-    # 해당 EKS Cluster에서 사용할 수 있는 subnet이라는 표시
+    "kubernetes.io/role/internal-elb"              = "1"
     "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
-  }
+  })
 }
 
 # ========================================
@@ -98,9 +95,9 @@ resource "aws_subnet" "private_db" {
   cidr_block        = var.private_db_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-db-${count.index + 1}"
-  }
+  })
 }
 
 # ========================================
@@ -109,9 +106,9 @@ resource "aws_subnet" "private_db" {
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
 
-  tags = {
-    Name = "${var.name_prefix}-public-rt"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-public-rf"
+  })
 }
 
 resource "aws_route" "public_internet" {
@@ -135,9 +132,9 @@ resource "aws_eip" "nat" {
 
   domain = "vpc"
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-nat-eip-${count.index + 1}"
-  }
+  })
 
   depends_on = [aws_internet_gateway.this]
 }
@@ -163,9 +160,9 @@ resource "aws_nat_gateway" "this" {
     var.nat_gateway_mode == "single" ? 0 : count.index
   ].id
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-nat-${count.index + 1}"
-  }
+  })
 
   depends_on = [aws_internet_gateway.this]
 }
@@ -181,9 +178,9 @@ resource "aws_route_table" "private_app" {
 
   vpc_id = aws_vpc.this.id
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-app-rt-${count.index + 1}"
-  }
+  })
 }
 
 resource "aws_route" "private_app_nat" {
@@ -216,9 +213,9 @@ resource "aws_route_table_association" "private_app" {
 resource "aws_route_table" "private_db" {
   vpc_id = aws_vpc.this.id
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-db-rt"
-  }
+  })
 }
 
 resource "aws_route_table_association" "private_db" {

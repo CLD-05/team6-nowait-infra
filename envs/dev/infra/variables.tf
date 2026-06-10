@@ -1,3 +1,6 @@
+# =========================================================================
+# 공통
+# =========================================================================
 # AWS 리전입니다.
 variable "region" {
   description = "AWS region"
@@ -55,18 +58,29 @@ variable "iam_role_permissions_boundary" {
   default     = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 }
 
-# VPC CIDR입니다.
-variable "vpc_cidr" {
-  description = "VPC CIDR block"
-  type        = string
+# 공통 태그
+variable "common_tags" {
+  description = "Common tags applied to all resources"
+  type        = map(string)
+  default     = {}
 }
 
+# =========================================================================
+# Network
+# =========================================================================
 # 사용할 AZ 개수입니다. 기본 2개를 사용합니다.
 variable "az_count" {
   description = "Number of Availability Zones to use"
   type        = number
   default     = 2
 }
+
+# VPC CIDR입니다.
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
+}
+
 
 # Public subnet CIDR 목록입니다. ALB, NAT Gateway가 위치합니다.
 variable "public_subnet_cidrs" {
@@ -99,6 +113,23 @@ variable "nat_gateway_mode" {
   }
 }
 
+# VPC DNS Hostname
+variable "enable_dns_hostnames" {
+  description = "VPC에서 DNS Hostname 사용 여부입니다."
+  type        = bool
+  default     = true
+}
+
+# VPC DNS 해석
+variable "enable_dns_support" {
+  description = "VPC에서 DNS 해석 사용 여부입니다."
+  type        = bool
+  default     = true
+}
+
+# =========================================================================
+# EKS
+# =========================================================================
 
 # EKS Kubernetes 버전입니다.
 # 이번 프로젝트에서는 1.34로 고정합니다.

@@ -1,3 +1,9 @@
+variable "common_tags" {
+  description = "Common tags applied to all resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "name_prefix" {
   description = "Common resource name prefix. Example: team6-nowait-dev"
   type        = string

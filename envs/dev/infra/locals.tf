@@ -9,12 +9,12 @@ data "aws_availability_zones" "available" {
 data "aws_caller_identity" "current" {}
 
 locals {
-  # 사용할 AZ 개수만큼 잘라서 사용합니다.
-  # 예: az_count = 2이면 사용 가능한 AZ 중 앞의 2개 사용
+  # 사용할 AZ 개수만큼 잘라서 사용
   azs = slice(data.aws_availability_zones.available.names, 0, var.az_count)
 
-  # 모든 리소스에 자동으로 붙일 공통 태그입니다.
-  # Team 태그는 학원 정책상 필수입니다.
+  eks_cluster_name = "${var.name_prefix}-eks"
+
+  # 모든 리소스에 자동으로 붙일 공통 태그
   default_tags = {
     Team        = var.team
     Project     = var.project

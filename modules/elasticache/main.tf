@@ -8,9 +8,9 @@ resource "aws_elasticache_subnet_group" "this" {
   name       = local.subnet_group_name
   subnet_ids = var.private_db_subnet_ids
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = local.subnet_group_name
-  }
+  })
 }
 
 # ----------------------------------------
@@ -57,7 +57,7 @@ resource "aws_elasticache_replication_group" "this" {
 
   apply_immediately = true
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name = local.replication_group_id
-  }
+  })
 }

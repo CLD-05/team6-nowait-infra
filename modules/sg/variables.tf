@@ -28,3 +28,16 @@ variable "bastion_enabled" {
   type        = bool
   default     = false
 }
+
+# 실제 EKS SG ID
+variable "eks_source_security_group_id" {
+  description = "Actual EKS node/cluster security group ID allowed to access RDS and Redis"
+  type        = string
+}
+
+# 공통 태그
+variable "common_tags" {
+  description = "Common tags applied to all resources"
+  type        = map(string)
+  default     = {}
+}
