@@ -12,3 +12,16 @@ output "environment" {
 output "iam_role_permissions_boundary" {
   value = var.iam_role_permissions_boundary
 }
+
+output "eks_addon_names" {
+  value = module.addons.eks_addon_names
+}
+
+output "eks_addon_versions" {
+  value = module.addons.eks_addon_versions
+}
+
+output "ebs_csi_role_arn" {
+  value = module.addons.ebs_csi_role_arn
+}
+
