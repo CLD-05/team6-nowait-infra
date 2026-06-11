@@ -316,3 +316,15 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+# DB 관련 변수입니다.
+variable "db_name" {
+  description = "Aurora DB 이름"
+  type        = string
+}
+
+variable "db_instance_count" {
+  description = "Aurora 인스턴스 수"
+  type        = number
+  default     = 1
+}

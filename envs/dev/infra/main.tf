@@ -122,3 +122,25 @@ module "elasticache" {
 
   common_tags = local.default_tags
 }
+
+
+module "database" {
+  source = "../../../modules/database"
+
+  env     = var.environment
+  project = var.project
+
+  # 네트워크 모듈 output 참조
+  vpc_id     = module.network.vpc_id
+  subnet_ids = module.network.private_db_subnet_ids # ← 이 부분! private_subnet_ids → private_db_subnet_ids 로 변경
+
+  # 스프링부트 파드가 올라갈 EKS Node SG를 허용
+  # EKS 모듈 만들고 나면 아래처럼 참조
+  # allowed_security_group_ids = [module.eks.node_security_group_id]
+  # 지금은 일단 빈 배열로 두고 나중에 추가
+  allowed_security_group_ids = []
+
+  db_name        = var.db_name
+  instance_class = var.db_instance_class
+  instance_count = var.db_instance_count
+}
