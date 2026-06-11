@@ -51,3 +51,18 @@ output "eso_helm_release_name" {
   description = "External Secrets Operator Helm release name"
   value       = helm_release.eso.name
 }
+
+output "eso_role_arn" {
+  description = "External Secrets Operator Pod Identity IAM Role ARN"
+  value       = var.enable_eso_pod_identity ? aws_iam_role.eso[0].arn : null
+}
+
+output "eso_policy_arn" {
+  description = "External Secrets Operator SSM read policy ARN"
+  value       = var.enable_eso_pod_identity ? aws_iam_policy.eso[0].arn : null
+}
+
+output "eso_pod_identity_association_id" {
+  description = "External Secrets Operator Pod Identity Association ID"
+  value       = var.enable_eso_pod_identity ? aws_eks_pod_identity_association.eso[0].association_id : null
+}

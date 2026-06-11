@@ -160,3 +160,17 @@ output "rds_db_name" {
   description = "RDS database name"
   value       = module.database.db_name
 }
+
+# ----------------------------------------
+# module "secrets" 활성화 이후 추가
+# ----------------------------------------
+
+output "secrets_parameter_prefix" {
+  description = "SSM Parameter Store prefix used by External Secrets Operator"
+  value       = module.secrets.parameter_prefix
+}
+
+output "secrets_parameter_names" {
+  description = "Created SSM parameter names"
+  value       = module.secrets.parameter_names
+}

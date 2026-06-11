@@ -158,6 +158,43 @@ module "elasticache" {
   common_tags = local.default_tags
 }
 
+# ========================================
+# Secrets
+# RDS / Redis / JWT application secrets
+#
+# RDS, Redis 생성 이후 해당 접속 정보를 SSM Parameter Store에 저장합니다.
+# External Secrets Operator는 platform-addons 단계에서 이 경로를 읽습니다.
+# ========================================
+module "secrets" {
+  source = "../../../modules/secrets"
+
+  team        = var.team
+  project     = var.project
+  environment = var.environment
+  name_prefix = var.name_prefix
+
+  # RDS 접속 정보
+  rds_host     = module.database.db_address
+  rds_port     = tostring(module.database.db_port)
+  rds_database = module.database.db_name
+  rds_username = var.db_master_username
+  rds_password = var.db_master_password
+
+  # Redis 접속 정보
+  redis_host = module.elasticache.primary_endpoint_address
+  redis_port = tostring(module.elasticache.port)
+
+  # 앱 비밀값
+  jwt_secret = var.jwt_secret
+
+  common_tags = local.default_tags
+
+  depends_on = [
+    module.database,
+    module.elasticache
+  ]
+}
+
 
 # ========================================
 # GitHub OIDC Role

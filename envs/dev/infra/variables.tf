@@ -374,6 +374,16 @@ variable "redis_snapshot_retention_limit" {
 }
 
 # ========================================
+# Application Secrets
+# ========================================
+
+variable "jwt_secret" {
+  description = "JWT secret for NoWait API"
+  type        = string
+  sensitive   = true
+}
+
+# ========================================
 # S3 / CloudFront
 # ========================================
 

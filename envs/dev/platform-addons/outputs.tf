@@ -49,3 +49,18 @@ output "eso_helm_release_name" {
   description = "External Secrets Operator Helm release name"
   value       = module.addons.eso_helm_release_name
 }
+
+output "eso_role_arn" {
+  description = "External Secrets Operator Pod Identity IAM Role ARN"
+  value       = module.addons.eso_role_arn
+}
+
+output "eso_policy_arn" {
+  description = "External Secrets Operator SSM read policy ARN"
+  value       = module.addons.eso_policy_arn
+}
+
+output "eso_pod_identity_association_id" {
+  description = "External Secrets Operator Pod Identity Association ID"
+  value       = module.addons.eso_pod_identity_association_id
+}

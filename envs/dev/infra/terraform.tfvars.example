@@ -173,6 +173,12 @@ github_oidc_provider_arn = "<GITHUB_OIDC_PROVIDER_ARN>"
 # arn:aws:ecr:ap-northeast-2:<AWS_ACCOUNT_ID>:repository/team6-nowait-app
 ecr_repository_arn = "<ECR_REPOSITORY_ARN>" 
 
+# ========================================
+# Application Secrets
+# ========================================
+
+jwt_secret = "<JWT_SECRET_VALUE>"
+
 
 # ========================================
 # S3 / CloudFront

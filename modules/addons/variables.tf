@@ -113,3 +113,14 @@ variable "eso_chart_version" {
   type        = string
   default     = "0.14.4"
 }
+
+variable "enable_eso_pod_identity" {
+  description = "Enable Pod Identity IAM Role for External Secrets Operator"
+  type        = bool
+  default     = true
+}
+
+variable "secrets_parameter_prefix" {
+  description = "SSM Parameter Store prefix that ESO can read. Example: /team6/nowait/dev"
+  type        = string
+}

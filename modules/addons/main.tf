@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 # -------------------------------------------------------------------
 # 1. 일반 EKS Managed Add-ons 설치
 # -------------------------------------------------------------------
@@ -305,7 +307,7 @@ resource "helm_release" "lbc" {
   values = [
     yamlencode({
       clusterName = var.cluster_name
-      region      = "ap-northeast-2"
+      region      = var.region
       vpcId       = var.vpc_id
 
       serviceAccount = {
@@ -345,9 +347,127 @@ resource "helm_release" "metrics_server" {
 # -------------------------------------------------------------------
 resource "helm_release" "eso" {
   name             = "external-secrets"
-  namespace        = "external-secrets"
+  namespace        = local.eso_namespace
   repository       = "https://charts.external-secrets.io"
   chart            = "external-secrets"
   version          = var.eso_chart_version
   create_namespace = true
+
+  values = [
+    yamlencode({
+      serviceAccount = {
+        create = true
+        name   = local.eso_service_account
+      }
+    })
+  ]
+
+  depends_on = [
+    aws_eks_addon.this,
+    aws_iam_role_policy_attachment.eso
+  ]
+}
+
+
+# -------------------------------------------------------------------
+# External Secrets Operator IAM Role (Pod Identity)
+# -------------------------------------------------------------------
+#
+# External Secrets Operator가 AWS SSM Parameter Store를 읽기 위한 IAM Role입니다.
+#
+# 연결 구조:
+#
+# external-secrets/external-secrets ServiceAccount
+#   ↓
+# Pod Identity Association
+#   ↓
+# team6-nowait-dev-eso-role
+#   ↓
+# SSM Parameter Store read policy
+# -------------------------------------------------------------------
+resource "aws_iam_role" "eso" {
+  count = var.enable_eso_pod_identity ? 1 : 0
+
+  name                 = "${var.name_prefix}-eso-role"
+  permissions_boundary = var.iam_role_permissions_boundary
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-eso-role"
+    Team = var.team
+  }
+}
+
+resource "aws_iam_policy" "eso" {
+  count = var.enable_eso_pod_identity ? 1 : 0
+
+  name = "${var.name_prefix}-eso-ssm-read-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ReadNowaitParameters"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = [
+          "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter${var.secrets_parameter_prefix}/*"
+        ]
+      },
+      {
+        Sid    = "DescribeParameters"
+        Effect = "Allow"
+        Action = [
+          "ssm:DescribeParameters"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-eso-ssm-read-policy"
+    Team = var.team
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "eso" {
+  count = var.enable_eso_pod_identity ? 1 : 0
+
+  role       = aws_iam_role.eso[0].name
+  policy_arn = aws_iam_policy.eso[0].arn
+}
+
+
+resource "aws_eks_pod_identity_association" "eso" {
+  count = var.enable_eso_pod_identity ? 1 : 0
+
+  cluster_name    = var.cluster_name
+  namespace       = local.eso_namespace
+  service_account = local.eso_service_account
+  role_arn        = aws_iam_role.eso[0].arn
+
+  depends_on = [
+    helm_release.eso,
+    aws_iam_role_policy_attachment.eso
+  ]
 }

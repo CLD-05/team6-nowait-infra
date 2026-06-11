@@ -63,3 +63,13 @@ metrics_server_chart_version = "3.12.2"
 
 # External Secrets Operator Helm chart version
 eso_chart_version = "0.14.4"
+
+
+# ========================================
+# External Secrets Operator / Pod Identity
+# ========================================
+
+enable_eso_pod_identity = true
+
+# envs/dev/infra의 terraform output secrets_parameter_prefix 값과 맞춰야 합니다.
+secrets_parameter_prefix = "/team6/nowait/dev"

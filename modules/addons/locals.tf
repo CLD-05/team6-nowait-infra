@@ -23,4 +23,8 @@ locals {
   # EKS Managed Add-on으로 aws-ebs-csi-driver를 설치하면
   # kube-system namespace 안에서 이 ServiceAccount를 사용합니다.
   ebs_csi_service_account = "ebs-csi-controller-sa"
+
+
+  eso_namespace       = "external-secrets"
+  eso_service_account = "external-secrets"
 }

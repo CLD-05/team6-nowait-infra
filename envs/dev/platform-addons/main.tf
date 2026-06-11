@@ -15,4 +15,7 @@ module "addons" {
   lbc_chart_version            = var.lbc_chart_version
   metrics_server_chart_version = var.metrics_server_chart_version
   eso_chart_version            = var.eso_chart_version
+
+  enable_eso_pod_identity  = var.enable_eso_pod_identity
+  secrets_parameter_prefix = var.secrets_parameter_prefix
 }
