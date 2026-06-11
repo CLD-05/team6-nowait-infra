@@ -122,3 +122,27 @@ module "elasticache" {
 
   common_tags = local.default_tags
 }
+
+
+# ========================================
+# GitHub OIDC Role
+# ========================================
+module "github_oidc_role" {
+  source = "../../../modules/github_oidc_role"
+
+  name_prefix      = var.name_prefix
+  role_name_suffix = "dev"
+
+  github_org       = var.github_org
+  github_repo      = var.github_repo
+  allowed_branches = ["develop"]
+
+  github_oidc_provider_arn = var.github_oidc_provider_arn
+  ecr_repository_arn       = var.ecr_repository_arn
+
+  ecr_access = "push"
+
+  iam_role_permissions_boundary = var.iam_role_permissions_boundary
+
+  common_tags = local.default_tags
+}

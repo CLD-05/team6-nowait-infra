@@ -212,6 +212,43 @@ variable "viewer_principal_arns" {
   default     = []
 }
 
+
+
+# ========================================
+# GitHub OIDC / ECR
+# ========================================
+
+variable "github_org" {
+  description = "GitHub organization or user name"
+  type        = string
+  default     = "CLD-05"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "team6-nowait-app"
+}
+
+variable "github_oidc_provider_arn" {
+  description = "Existing GitHub OIDC Provider ARN"
+  type        = string
+}
+
+variable "ecr_repository_arn" {
+  description = "ECR repository ARN"
+  type        = string
+}
+
+
+
+
+
+
+
+
+
+
 # RDS 인스턴스 타입입니다.
 variable "db_instance_class" {
   description = "RDS instance class"

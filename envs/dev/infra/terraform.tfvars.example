@@ -125,6 +125,38 @@ redis_snapshot_retention_limit = 0
 bastion_enabled          = false
 bastion_ssh_cidr_blocks = []
 
+# ========================================
+# GitHub OIDC / ECR
+# ========================================
+
+# 깃허브 조직 또는 사용자 이름
+github_org  = "CLD-05"
+
+# github Actions workflow가 실행되는 애플리케이션 레포지토리명
+github_repo = "team6-nowait-app"
+
+
+# envs/global/iam에서 생성한 GitHub OIDC Provider ARN을 입력합니다.
+#
+# 확인 방법:
+# cd envs/global/iam
+# terraform output github_oidc_provider_arn
+#
+# 예:
+# arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
+github_oidc_provider_arn = "<GITHUB_OIDC_PROVIDER_ARN>"
+
+
+# shared ECR 또는 ECR 생성 위치에서 생성한 ECR Repository ARN을 입력합니다.
+#
+# 확인 방법:
+# ECR을 Terraform으로 생성한 위치에서:
+# terraform output repository_arn
+#
+# 예:
+# arn:aws:ecr:ap-northeast-2:<AWS_ACCOUNT_ID>:repository/team6-nowait-app
+ecr_repository_arn = "<ECR_REPOSITORY_ARN>" 
+
 
 # ========================================
 # S3 / CloudFront

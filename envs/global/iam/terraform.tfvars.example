@@ -1,0 +1,9 @@
+# ========================================
+# Common
+# ========================================
+
+team        = "team6"
+project     = "nowait"
+environment = "global"
+name_prefix = "team6-nowait"
+region      = "ap-northeast-2"

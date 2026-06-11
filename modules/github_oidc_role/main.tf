@@ -1,33 +1,7 @@
 # ========================================
-# GitHub OIDC Provider
-# ========================================
-
-data "tls_certificate" "github" {
-  url = "https://token.actions.githubusercontent.com"
-}
-
-resource "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = [
-    "sts.amazonaws.com"
-  ]
-
-  thumbprint_list = [
-    data.tls_certificate.github.certificates[0].sha1_fingerprint
-  ]
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-github-oidc-provider"
-  })
-}
-
-
-# ========================================
 # Assume Role Policy
 # ========================================
-
-data "aws_iam_policy_document" "github_assume_role" {
+data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
 
@@ -37,8 +11,9 @@ data "aws_iam_policy_document" "github_assume_role" {
 
     principals {
       type = "Federated"
+
       identifiers = [
-        aws_iam_openid_connect_provider.github.arn
+        var.github_oidc_provider_arn
       ]
     }
 
@@ -67,22 +42,54 @@ data "aws_iam_policy_document" "github_assume_role" {
 # ========================================
 # GitHub Actions Role
 # ========================================
-
-resource "aws_iam_role" "github_actions" {
-  name                 = "${var.name_prefix}-github-actions-role"
-  assume_role_policy   = data.aws_iam_policy_document.github_assume_role.json
+resource "aws_iam_role" "this" {
+  name                 = "${var.name_prefix}-${var.role_name_suffix}-github-actions-role"
+  assume_role_policy   = data.aws_iam_policy_document.assume_role.json
   permissions_boundary = var.iam_role_permissions_boundary
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-github-actions-role"
+    Name        = "${var.name_prefix}-${var.role_name_suffix}-github-actions-role"
+    DeployRole = var.role_name_suffix
   })
+}
+
+
+# ========================================
+# ECR Read Policy
+# ========================================
+data "aws_iam_policy_document" "ecr_read" {
+  statement {
+    sid    = "AllowECRLogin"
+    effect = "Allow"
+
+    actions = [
+      "ecr:GetAuthorizationToken"
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowECRRead"
+    effect = "Allow"
+
+    actions = [
+      "ecr:BatchGetImage",
+      "ecr:DescribeImages",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages"
+    ]
+
+    resources = [
+      var.ecr_repository_arn
+    ]
+  }
 }
 
 
 # ========================================
 # ECR Push Policy
 # ========================================
-
 data "aws_iam_policy_document" "ecr_push" {
   statement {
     sid    = "AllowECRLogin"
@@ -117,16 +124,26 @@ data "aws_iam_policy_document" "ecr_push" {
   }
 }
 
-resource "aws_iam_policy" "ecr_push" {
-  name   = "${var.name_prefix}-github-actions-ecr-push-policy"
-  policy = data.aws_iam_policy_document.ecr_push.json
+
+# ========================================
+# ECR Policy
+# ========================================
+resource "aws_iam_policy" "ecr" {
+  name = "${var.name_prefix}-${var.role_name_suffix}-github-actions-ecr-${var.ecr_access}-policy"
+
+  policy = (
+    var.ecr_access == "push"
+    ? data.aws_iam_policy_document.ecr_push.json
+    : data.aws_iam_policy_document.ecr_read.json
+  )
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-github-actions-ecr-push-policy"
+    Name        = "${var.name_prefix}-${var.role_name_suffix}-github-actions-ecr-${var.ecr_access}-policy"
+    DeployRole = var.role_name_suffix
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecr_push" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.ecr_push.arn
+resource "aws_iam_role_policy_attachment" "ecr" {
+  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.ecr.arn
 }
