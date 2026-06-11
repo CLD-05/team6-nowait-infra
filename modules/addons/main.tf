@@ -227,7 +227,7 @@ resource "aws_eks_addon" "ebs_csi" {
 #   ↓
 # team6-nowait-dev-lbc-role
 #   ↓
-# ElasticLoadBalancingFullAccess
+# team6-nowait-dev-lbc-policy
 # -------------------------------------------------------------------
 resource "aws_iam_role" "lbc" {
   name                 = "${var.name_prefix}-lbc-role"
@@ -255,9 +255,28 @@ resource "aws_iam_role" "lbc" {
   }
 }
 
+
+# -------------------------------------------------------------------
+# AWS Load Balancer Controller IAM Policy
+# -------------------------------------------------------------------
+#
+# AWS Load Balancer Controller가 ALB/NLB, Target Group, Listener,
+# Security Group, Subnet/Tag 등을 관리할 수 있도록 전용 IAM Policy를 생성합니다.
+# -------------------------------------------------------------------
+resource "aws_iam_policy" "lbc" {
+  name = "${var.name_prefix}-lbc-policy"
+
+  policy = file("${path.module}/iam_policy_lbc.json")
+
+  tags = {
+    Name = "${var.name_prefix}-lbc-policy"
+    Team = var.team
+  }
+}
+
 resource "aws_iam_role_policy_attachment" "lbc" {
   role       = aws_iam_role.lbc.name
-  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+  policy_arn = aws_iam_policy.lbc.arn
 }
 
 resource "aws_eks_pod_identity_association" "lbc" {
@@ -266,21 +285,29 @@ resource "aws_eks_pod_identity_association" "lbc" {
   service_account = "aws-load-balancer-controller"
   role_arn        = aws_iam_role.lbc.arn
 
-  depends_on = [aws_eks_addon.this]
+  depends_on = [
+    aws_eks_addon.this,
+    aws_iam_role_policy_attachment.lbc
+  ]
 }
 
+
+# -------------------------------------------------------------------
+# AWS Load Balancer Controller Helm Release
+# -------------------------------------------------------------------
 resource "helm_release" "lbc" {
   name       = "aws-load-balancer-controller"
+  namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  namespace  = "kube-system"
   version    = var.lbc_chart_version
 
   values = [
     yamlencode({
       clusterName = var.cluster_name
-      region      = var.region
+      region      = "ap-northeast-2"
       vpcId       = var.vpc_id
+
       serviceAccount = {
         create = true
         name   = "aws-load-balancer-controller"
@@ -289,45 +316,38 @@ resource "helm_release" "lbc" {
   ]
 
   depends_on = [
-    aws_eks_addon.this,
     aws_eks_pod_identity_association.lbc
   ]
 }
 
+# -------------------------------------------------------------------
+# metrics-server Helm Release
+# -------------------------------------------------------------------
 resource "helm_release" "metrics_server" {
-  name       = "metrics-server"
-  repository = "https://kubernetes-sigs.github.io/metrics-server/"
-  chart      = "metrics-server"
-  namespace  = "kube-system"
-  version    = var.metrics_server_chart_version
+  name             = "metrics-server"
+  namespace        = "kube-system"
+  repository       = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart            = "metrics-server"
+  version          = var.metrics_server_chart_version
+  create_namespace = false
 
   values = [
     yamlencode({
-      args = ["--kubelet-insecure-tls"]
+      args = [
+        "--kubelet-insecure-tls"
+      ]
     })
   ]
-
-  depends_on = [aws_eks_addon.this]
 }
 
+# -------------------------------------------------------------------
+# External Secrets Operator Helm Release
+# -------------------------------------------------------------------
 resource "helm_release" "eso" {
-  name       = "external-secrets"
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  namespace  = "external-secrets"
-  version    = var.eso_chart_version
-
+  name             = "external-secrets"
+  namespace        = "external-secrets"
+  repository       = "https://charts.external-secrets.io"
+  chart            = "external-secrets"
+  version          = var.eso_chart_version
   create_namespace = true
-
-  values = [
-    yamlencode({
-      installCRDs = true
-      serviceAccount = {
-        create = true
-        name   = "external-secrets"
-      }
-    })
-  ]
-
-  depends_on = [aws_eks_addon.this]
 }

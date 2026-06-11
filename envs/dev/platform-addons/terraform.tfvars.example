@@ -38,3 +38,28 @@ addon_versions = {}
 
 # EBS CSI Driver에 Pod Identity Role 연결
 enable_ebs_csi_pod_identity = true
+
+# ========================================
+# Network
+# ========================================
+
+# dev/infra에서 생성된 VPC ID를 입력합니다.
+#
+# 확인 방법:
+# cd envs/dev/infra
+# terraform output vpc_id
+vpc_id = "<DEV_VPC_ID>"
+
+
+# ========================================
+# Helm Chart Versions
+# ========================================
+
+# AWS Load Balancer Controller Helm chart version
+lbc_chart_version = "1.13.0"
+
+# metrics-server Helm chart version
+metrics_server_chart_version = "3.12.2"
+
+# External Secrets Operator Helm chart version
+eso_chart_version = "0.14.4"

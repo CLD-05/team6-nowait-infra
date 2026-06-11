@@ -66,3 +66,24 @@ variable "vpc_id" {
   description = "VPC ID for AWS Load Balancer Controller"
   type        = string
 }
+
+# AWS Load Balancer Controller Helm chart 버전
+variable "lbc_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.13.0"
+}
+
+# metrics-server Helm chart 버전
+variable "metrics_server_chart_version" {
+  description = "metrics-server Helm chart version"
+  type        = string
+  default     = "3.12.2"
+}
+
+# External Secrets Operator Helm chart 버전
+variable "eso_chart_version" {
+  description = "External Secrets Operator Helm chart version"
+  type        = string
+  default     = "0.14.4"
+}

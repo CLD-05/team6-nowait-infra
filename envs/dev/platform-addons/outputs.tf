@@ -25,3 +25,27 @@ output "ebs_csi_role_arn" {
   value = module.addons.ebs_csi_role_arn
 }
 
+output "lbc_role_arn" {
+  description = "AWS Load Balancer Controller Pod Identity IAM Role ARN"
+  value       = module.addons.lbc_role_arn
+}
+
+output "lbc_policy_arn" {
+  description = "AWS Load Balancer Controller IAM Policy ARN"
+  value       = module.addons.lbc_policy_arn
+}
+
+output "lbc_helm_release_name" {
+  description = "AWS Load Balancer Controller Helm release name"
+  value       = module.addons.lbc_helm_release_name
+}
+
+output "metrics_server_helm_release_name" {
+  description = "metrics-server Helm release name"
+  value       = module.addons.metrics_server_helm_release_name
+}
+
+output "eso_helm_release_name" {
+  description = "External Secrets Operator Helm release name"
+  value       = module.addons.eso_helm_release_name
+}

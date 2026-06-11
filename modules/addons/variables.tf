@@ -25,7 +25,6 @@ variable "project" {
 }
 
 # 환경 이름입니다.
-# 여기서는 prod로 사용합니다.
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -37,7 +36,6 @@ variable "environment" {
 }
 
 # 리소스 이름 prefix입니다.
-# 예: team6-nowait-prod
 variable "name_prefix" {
   description = "Common resource name prefix"
   type        = string
@@ -56,7 +54,7 @@ variable "iam_role_permissions_boundary" {
   default     = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 }
 
-# Add-ons를 설치할 prod EKS Cluster 이름입니다.
+# Add-ons를 설치할 EKS Cluster 이름입니다.
 variable "cluster_name" {
   description = "EKS cluster name"
   type        = string

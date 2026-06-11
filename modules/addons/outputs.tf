@@ -26,3 +26,28 @@ output "ebs_csi_role_arn" {
 
   value = local.enable_ebs_csi_driver && var.enable_ebs_csi_pod_identity ? aws_iam_role.ebs_csi[0].arn : null
 }
+
+output "lbc_role_arn" {
+  description = "AWS Load Balancer Controller Pod Identity IAM Role ARN"
+  value       = aws_iam_role.lbc.arn
+}
+
+output "lbc_policy_arn" {
+  description = "AWS Load Balancer Controller IAM Policy ARN"
+  value       = aws_iam_policy.lbc.arn
+}
+
+output "lbc_helm_release_name" {
+  description = "AWS Load Balancer Controller Helm release name"
+  value       = helm_release.lbc.name
+}
+
+output "metrics_server_helm_release_name" {
+  description = "metrics-server Helm release name"
+  value       = helm_release.metrics_server.name
+}
+
+output "eso_helm_release_name" {
+  description = "External Secrets Operator Helm release name"
+  value       = helm_release.eso.name
+}
