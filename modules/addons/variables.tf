@@ -90,3 +90,28 @@ variable "enable_ebs_csi_pod_identity" {
   type        = bool
   default     = true
 }
+
+# LBC가 ALB를 생성할 VPC ID입니다.
+variable "vpc_id" {
+  description = "VPC ID for AWS Load Balancer Controller"
+  type        = string
+}
+
+# Helm chart 버전 고정용 변수들입니다.
+variable "lbc_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.13.0"
+}
+
+variable "metrics_server_chart_version" {
+  description = "metrics-server Helm chart version"
+  type        = string
+  default     = "3.12.2"
+}
+
+variable "eso_chart_version" {
+  description = "External Secrets Operator Helm chart version"
+  type        = string
+  default     = "0.14.4"
+}

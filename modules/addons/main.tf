@@ -211,3 +211,123 @@ resource "aws_eks_addon" "ebs_csi" {
     Name = "${var.cluster_name}-aws-ebs-csi-driver"
   }
 }
+
+# -------------------------------------------------------------------
+# 5. AWS Load Balancer Controller IAM Role (Pod Identity)
+# -------------------------------------------------------------------
+#
+# LBC는 ALB/NLB를 생성/삭제/관리합니다.
+# 이를 위해 AWS ELB API 호출 권한이 필요합니다.
+#
+# 연결 구조:
+#
+# kube-system/aws-load-balancer-controller (ServiceAccount)
+#   ↓
+# Pod Identity Association
+#   ↓
+# team6-nowait-dev-lbc-role
+#   ↓
+# ElasticLoadBalancingFullAccess
+# -------------------------------------------------------------------
+resource "aws_iam_role" "lbc" {
+  name                 = "${var.name_prefix}-lbc-role"
+  permissions_boundary = var.iam_role_permissions_boundary
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-lbc-role"
+    Team = "team6"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lbc" {
+  role       = aws_iam_role.lbc.name
+  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+}
+
+resource "aws_eks_pod_identity_association" "lbc" {
+  cluster_name    = var.cluster_name
+  namespace       = "kube-system"
+  service_account = "aws-load-balancer-controller"
+  role_arn        = aws_iam_role.lbc.arn
+
+  depends_on = [aws_eks_addon.this]
+}
+
+resource "helm_release" "lbc" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  version    = var.lbc_chart_version
+
+  values = [
+    yamlencode({
+      clusterName = var.cluster_name
+      region      = var.region
+      vpcId       = var.vpc_id
+      serviceAccount = {
+        create = true
+        name   = "aws-load-balancer-controller"
+      }
+    })
+  ]
+
+  depends_on = [
+    aws_eks_addon.this,
+    aws_eks_pod_identity_association.lbc
+  ]
+}
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  namespace  = "kube-system"
+  version    = var.metrics_server_chart_version
+
+  values = [
+    yamlencode({
+      args = ["--kubelet-insecure-tls"]
+    })
+  ]
+
+  depends_on = [aws_eks_addon.this]
+}
+
+resource "helm_release" "eso" {
+  name       = "external-secrets"
+  repository = "https://charts.external-secrets.io"
+  chart      = "external-secrets"
+  namespace  = "external-secrets"
+  version    = var.eso_chart_version
+
+  create_namespace = true
+
+  values = [
+    yamlencode({
+      installCRDs = true
+      serviceAccount = {
+        create = true
+        name   = "external-secrets"
+      }
+    })
+  ]
+
+  depends_on = [aws_eks_addon.this]
+}

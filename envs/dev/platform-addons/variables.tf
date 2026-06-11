@@ -61,3 +61,8 @@ variable "enable_ebs_csi_pod_identity" {
   type        = bool
   default     = true
 }
+
+variable "vpc_id" {
+  description = "VPC ID for AWS Load Balancer Controller"
+  type        = string
+}
