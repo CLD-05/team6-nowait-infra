@@ -1,6 +1,6 @@
 terraform {
   # Terraform 1.10+ S3 native lock 사용
-  required_version = ">= 1.15.3"
+  required_version = "= 1.15.3"
 
   required_providers {
     # AWS IAM Role, EKS Add-on, Pod Identity Association 관리
