@@ -241,13 +241,29 @@ variable "ecr_repository_arn" {
 }
 
 
+# ========================================
+# Bastion
+# ========================================
+
+# Bastion 생성 여부입니다.
+variable "bastion_enabled" {
+  description = "Enable bastion EC2"
+  type        = bool
+  default     = true
+}
+
+# SSH 접근 허용 CIDR입니다.
+# SSM만 사용할 예정이므로 기본값은 빈 배열입니다.
+variable "bastion_ssh_cidr_blocks" {
+  description = "Allowed SSH CIDRs. Keep empty when using SSM only."
+  type        = list(string)
+  default     = []
+}
 
 
-
-
-
-
-
+# ========================================
+# RDS
+# ========================================
 
 # RDS 인스턴스 타입입니다.
 variable "db_instance_class" {
@@ -280,6 +296,10 @@ variable "db_backup_retention" {
   type        = number
 }
 
+# ========================================
+# ElasitCache (Redis)
+# ========================================
+
 # Redis 노드 타입입니다.
 variable "redis_node_type" {
   description = "ElastiCache Redis node type"
@@ -311,20 +331,9 @@ variable "redis_snapshot_retention_limit" {
   default     = 0
 }
 
-# Bastion 생성 여부입니다.
-variable "bastion_enabled" {
-  description = "Enable bastion EC2"
-  type        = bool
-  default     = true
-}
-
-# SSH 접근 허용 CIDR입니다.
-# SSM만 사용할 예정이므로 기본값은 빈 배열입니다.
-variable "bastion_ssh_cidr_blocks" {
-  description = "Allowed SSH CIDRs. Keep empty when using SSM only."
-  type        = list(string)
-  default     = []
-}
+# ========================================
+# S3 / CloudFront
+# ========================================
 
 # 이미지 업로드용 S3 버킷 생성 여부입니다.
 variable "image_bucket_enabled" {
@@ -347,6 +356,10 @@ variable "cloudfront_enabled" {
   default     = false
 }
 
+
+# ========================================
+# CloudWatch
+# ========================================
 # CloudWatch Log 보관 기간입니다.
 variable "log_retention_days" {
   description = "CloudWatch log retention days"
