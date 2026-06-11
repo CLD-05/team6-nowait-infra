@@ -9,4 +9,5 @@ module "addons" {
   eks_addons                  = var.eks_addons
   addon_versions              = var.addon_versions
   enable_ebs_csi_pod_identity = var.enable_ebs_csi_pod_identity
+  vpc_id                      = var.vpc_id  # 추가
 }
