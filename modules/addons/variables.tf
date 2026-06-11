@@ -124,3 +124,31 @@ variable "secrets_parameter_prefix" {
   description = "SSM Parameter Store prefix that ESO can read. Example: /team6/nowait/dev"
   type        = string
 }
+
+# ========================================
+# NoWait API Pod Identity
+# ========================================
+
+variable "enable_nowait_api_pod_identity" {
+  description = "Enable Pod Identity IAM Role for NoWait API"
+  type        = bool
+  default     = true
+}
+
+variable "nowait_api_namespace" {
+  description = "Kubernetes namespace for NoWait API"
+  type        = string
+  default     = "nowait-dev"
+}
+
+variable "nowait_api_service_account" {
+  description = "Kubernetes ServiceAccount name for NoWait API"
+  type        = string
+  default     = "nowait-api"
+}
+
+variable "image_bucket_arn" {
+  description = "S3 image bucket ARN for NoWait API"
+  type        = string
+  default     = null
+}

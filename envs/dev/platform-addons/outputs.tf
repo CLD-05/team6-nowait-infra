@@ -64,3 +64,22 @@ output "eso_pod_identity_association_id" {
   description = "External Secrets Operator Pod Identity Association ID"
   value       = module.addons.eso_pod_identity_association_id
 }
+
+# ----------------------------------------
+# NoWait API Pod Identity
+# ----------------------------------------
+
+output "nowait_api_role_arn" {
+  description = "NoWait API Pod Identity IAM Role ARN"
+  value       = module.addons.nowait_api_role_arn
+}
+
+output "nowait_api_s3_policy_arn" {
+  description = "NoWait API S3 image bucket policy ARN"
+  value       = module.addons.nowait_api_s3_policy_arn
+}
+
+output "nowait_api_pod_identity_association_id" {
+  description = "NoWait API Pod Identity Association ID"
+  value       = module.addons.nowait_api_pod_identity_association_id
+}

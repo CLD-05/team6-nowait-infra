@@ -471,3 +471,146 @@ resource "aws_eks_pod_identity_association" "eso" {
     aws_iam_role_policy_attachment.eso
   ]
 }
+
+# -------------------------------------------------------------------
+# NoWait API IAM Role (Pod Identity)
+# -------------------------------------------------------------------
+#
+# nowait-api Pod가 AWS 리소스에 접근하기 위한 IAM Role입니다.
+#
+# 현재 권한:
+# - S3 Image Bucket Presigned URL 발급용 권한
+#
+# 연결 구조:
+#
+# nowait-dev/nowait-api ServiceAccount
+#   ↓
+# Pod Identity Association
+#   ↓
+# team6-nowait-dev-nowait-api-role
+#   ↓
+# S3 Image Bucket 접근 권한
+# -------------------------------------------------------------------
+resource "aws_iam_role" "nowait_api" {
+  count = var.enable_nowait_api_pod_identity ? 1 : 0
+
+  name                 = "${var.name_prefix}-nowait-api-role"
+  permissions_boundary = var.iam_role_permissions_boundary
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-nowait-api-role"
+    Team = var.team
+  }
+}
+
+
+# -------------------------------------------------------------------
+# NoWait API S3 Image Bucket IAM Policy
+# -------------------------------------------------------------------
+#
+# nowait-api가 Presigned URL을 발급하기 위해 필요한 S3 권한입니다.
+#
+# PutObject:
+# - 브라우저가 presigned URL로 이미지 업로드
+#
+# GetObject:
+# - 이미지 조회용 presigned URL 발급 시 사용
+#
+# DeleteObject:
+# - 이미지 삭제 기능 구현 시 사용
+#
+# AbortMultipartUpload:
+# - 멀티파트 업로드 중단 시 사용 가능
+# -------------------------------------------------------------------
+resource "aws_iam_policy" "nowait_api_s3" {
+  count = var.enable_nowait_api_pod_identity && var.image_bucket_arn != null ? 1 : 0
+
+  name = "${var.name_prefix}-nowait-api-s3-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AccessImageBucketObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:AbortMultipartUpload"
+        ]
+        Resource = [
+          "${var.image_bucket_arn}/*"
+        ]
+      },
+      {
+        Sid    = "ListImageBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.image_bucket_arn
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.name_prefix}-nowait-api-s3-policy"
+    Team = var.team
+  }
+}
+
+
+# -------------------------------------------------------------------
+# NoWait API IAM Role Policy Attachment
+# -------------------------------------------------------------------
+resource "aws_iam_role_policy_attachment" "nowait_api_s3" {
+  count = var.enable_nowait_api_pod_identity && var.image_bucket_arn != null ? 1 : 0
+
+  role       = aws_iam_role.nowait_api[0].name
+  policy_arn = aws_iam_policy.nowait_api_s3[0].arn
+}
+
+
+# -------------------------------------------------------------------
+# NoWait API Pod Identity Association
+# -------------------------------------------------------------------
+#
+# nowait-api ServiceAccount에 IAM Role을 연결합니다.
+#
+# 주의:
+# Kubernetes Deployment에서 반드시 아래처럼 설정해야 합니다.
+#
+# serviceAccountName: nowait-api
+# -------------------------------------------------------------------
+resource "aws_eks_pod_identity_association" "nowait_api" {
+  count = var.enable_nowait_api_pod_identity ? 1 : 0
+
+  cluster_name    = var.cluster_name
+  namespace       = var.nowait_api_namespace
+  service_account = var.nowait_api_service_account
+  role_arn        = aws_iam_role.nowait_api[0].arn
+
+  depends_on = [
+    aws_eks_addon.this,
+    aws_iam_role_policy_attachment.nowait_api_s3
+  ]
+}

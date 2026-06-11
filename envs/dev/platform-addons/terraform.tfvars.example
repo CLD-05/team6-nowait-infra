@@ -73,3 +73,14 @@ enable_eso_pod_identity = true
 
 # envs/dev/infra의 terraform output secrets_parameter_prefix 값과 맞춰야 합니다.
 secrets_parameter_prefix = "/team6/nowait/dev"
+
+# ========================================
+# NoWait API Pod Identity
+# ========================================
+
+enable_nowait_api_pod_identity = true
+
+nowait_api_namespace       = "nowait-dev"
+nowait_api_service_account = "nowait-api"
+
+image_bucket_arn = "<IMAGE_BUCKET_ARN>"

@@ -66,3 +66,22 @@ output "eso_pod_identity_association_id" {
   description = "External Secrets Operator Pod Identity Association ID"
   value       = var.enable_eso_pod_identity ? aws_eks_pod_identity_association.eso[0].association_id : null
 }
+
+# ----------------------------------------
+# NoWait API Pod Identity
+# ----------------------------------------
+
+output "nowait_api_role_arn" {
+  description = "NoWait API Pod Identity IAM Role ARN"
+  value       = var.enable_nowait_api_pod_identity ? aws_iam_role.nowait_api[0].arn : null
+}
+
+output "nowait_api_s3_policy_arn" {
+  description = "NoWait API S3 image bucket policy ARN"
+  value       = var.enable_nowait_api_pod_identity && var.image_bucket_arn != null ? aws_iam_policy.nowait_api_s3[0].arn : null
+}
+
+output "nowait_api_pod_identity_association_id" {
+  description = "NoWait API Pod Identity Association ID"
+  value       = var.enable_nowait_api_pod_identity ? aws_eks_pod_identity_association.nowait_api[0].association_id : null
+}

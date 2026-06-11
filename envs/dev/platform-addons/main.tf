@@ -1,8 +1,12 @@
 module "addons" {
   source = "../../../modules/addons"
 
-  name_prefix                   = var.name_prefix
-  environment                   = var.environment
+  region      = var.region
+  team        = var.team
+  project     = var.project
+  name_prefix = var.name_prefix
+  environment = var.environment
+
   cluster_name                  = var.cluster_name
   iam_role_permissions_boundary = var.iam_role_permissions_boundary
 
@@ -16,6 +20,13 @@ module "addons" {
   metrics_server_chart_version = var.metrics_server_chart_version
   eso_chart_version            = var.eso_chart_version
 
+  # External Secrets Operator Pod Identity
   enable_eso_pod_identity  = var.enable_eso_pod_identity
   secrets_parameter_prefix = var.secrets_parameter_prefix
+
+  # NoWait API Pod Identity
+  enable_nowait_api_pod_identity = var.enable_nowait_api_pod_identity
+  nowait_api_namespace           = var.nowait_api_namespace
+  nowait_api_service_account     = var.nowait_api_service_account
+  image_bucket_arn               = var.image_bucket_arn
 }
