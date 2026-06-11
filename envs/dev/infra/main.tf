@@ -158,26 +158,46 @@ module "elasticache" {
   common_tags = local.default_tags
 }
 
+# ========================================
+# S3
+# Image Bucket / Frontend Bucket
+#
+# dev: image_bucket_enabled = true
+#      frontend_bucket_enabled = false
+# ========================================
+module "s3" {
+  source = "../../../modules/s3"
+
+  name_prefix = var.name_prefix
+
+  image_bucket_enabled    = var.image_bucket_enabled
+  frontend_bucket_enabled = var.frontend_bucket_enabled
+
+  cors_allowed_origins = var.cors_allowed_origins
+
+  # frontend_bucket_enabled = false인 dev에서는 null
+  cloudfront_distribution_arn = var.cloudfront_enabled ? module.cloudfront.distribution_arn : null
+
+  common_tags = local.default_tags
+}
 
 # ========================================
-# GitHub OIDC Role
+# CloudFront
+# S3 Frontend + ALB 오리진
+#
+# dev 초기: cloudfront_enabled = false
+# prod: cloudfront_enabled = true
 # ========================================
-module "github_oidc_role" {
-  source = "../../../modules/github_oidc_role"
+module "cloudfront" {
+  source = "../../../modules/cloudfront"
 
-  name_prefix      = "${var.team}-${var.project}"
-  role_name_suffix = "dev"
+  name_prefix = var.name_prefix
 
-  github_org       = var.github_org
-  github_repo      = var.github_repo
-  allowed_branches = ["develop"]
+  cloudfront_enabled = var.cloudfront_enabled
 
-  github_oidc_provider_arn = var.github_oidc_provider_arn
-  ecr_repository_arn       = var.ecr_repository_arn
-
-  ecr_access = "push"
-
-  iam_role_permissions_boundary = var.iam_role_permissions_boundary
+  # cloudfront_enabled = false인 dev에서는 null
+  frontend_bucket_domain_name = var.frontend_bucket_enabled ? module.s3.frontend_bucket_domain_name : null
+  alb_dns_name                = var.cloudfront_enabled ? var.alb_dns_name : null
 
   common_tags = local.default_tags
 }
