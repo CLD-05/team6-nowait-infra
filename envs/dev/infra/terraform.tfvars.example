@@ -184,10 +184,26 @@ jwt_secret = "<JWT_SECRET_VALUE>"
 # S3 / CloudFront
 # ========================================
 
-# Dev 초기에는 React 로컬 실행 기준
-image_bucket_enabled    = true
+# dev에서는 이미지 업로드 테스트용 S3 Bucket만 생성합니다.
+image_bucket_enabled = true
+
+# React 정적 파일 배포용 bucket은 prod에서만 사용합니다.
 frontend_bucket_enabled = false
-cloudfront_enabled      = false
+
+# CloudFront는 prod에서만 사용합니다.
+cloudfront_enabled = false
+
+# dev 개발 서버 주소
+# CRA: http://localhost:3000
+# Vite: http://localhost:5173
+cors_allowed_origins = [
+  "http://localhost:3000",
+  "http://localhost:5173"
+]
+
+# dev에서는 CloudFront를 사용하지 않으므로 null입니다.
+# prod에서 CloudFront를 사용할 때 ALB DNS name을 넣습니다.
+alb_dns_name = null
 
 
 # ========================================

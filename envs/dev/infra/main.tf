@@ -218,3 +218,32 @@ module "github_oidc_role" {
 
   common_tags = local.default_tags
 }
+
+# ========================================
+# S3
+# Image Bucket / Frontend Bucket
+#
+# dev:
+# - image bucket enabled
+# - frontend bucket disabled
+#
+# prod:
+# - image bucket enabled
+# - frontend bucket enabled
+# ========================================
+module "s3" {
+  source = "../../../modules/s3"
+
+  name_prefix = var.name_prefix
+
+  image_bucket_enabled    = var.image_bucket_enabled
+  frontend_bucket_enabled = var.frontend_bucket_enabled
+
+  cors_allowed_origins = var.cors_allowed_origins
+
+  # dev에서는 CloudFront 비활성화이므로 null
+  # prod에서 CloudFront 활성화 시 CloudFront Distribution ARN을 연결해야 합니다.
+  cloudfront_distribution_arn = null
+
+  common_tags = local.default_tags
+}

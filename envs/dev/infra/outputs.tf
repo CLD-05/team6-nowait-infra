@@ -174,3 +174,37 @@ output "secrets_parameter_names" {
   description = "Created SSM parameter names"
   value       = module.secrets.parameter_names
 }
+
+# ----------------------------------------
+# module "s3" 활성화 이후 추가
+# ----------------------------------------
+
+output "image_bucket_id" {
+  description = "Image S3 bucket ID"
+  value       = module.s3.image_bucket_id
+}
+
+output "image_bucket_arn" {
+  description = "Image S3 bucket ARN"
+  value       = module.s3.image_bucket_arn
+}
+
+output "image_bucket_domain_name" {
+  description = "Image S3 bucket regional domain name"
+  value       = module.s3.image_bucket_domain_name
+}
+
+output "frontend_bucket_id" {
+  description = "Frontend S3 bucket ID. dev에서는 null입니다."
+  value       = module.s3.frontend_bucket_id
+}
+
+output "frontend_bucket_arn" {
+  description = "Frontend S3 bucket ARN. dev에서는 null입니다."
+  value       = module.s3.frontend_bucket_arn
+}
+
+output "frontend_bucket_domain_name" {
+  description = "Frontend S3 bucket regional domain name. dev에서는 null입니다."
+  value       = module.s3.frontend_bucket_domain_name
+}

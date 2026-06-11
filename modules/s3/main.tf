@@ -1,3 +1,4 @@
+data "aws_caller_identity" "current" {}
 # ========================================
 # Image Bucket
 #
@@ -11,10 +12,10 @@
 resource "aws_s3_bucket" "image" {
   count = var.image_bucket_enabled ? 1 : 0
 
-  bucket = "${var.name_prefix}-image"
+  bucket = "${var.name_prefix}-image-${data.aws_caller_identity.current.account_id}"
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-image"
+    Name = "${var.name_prefix}-image-${data.aws_caller_identity.current.account_id}"
   })
 }
 
@@ -71,10 +72,10 @@ resource "aws_s3_bucket_cors_configuration" "image" {
 resource "aws_s3_bucket" "frontend" {
   count = var.frontend_bucket_enabled ? 1 : 0
 
-  bucket = "${var.name_prefix}-frontend"
+  bucket = "${var.name_prefix}-frontend-${data.aws_caller_identity.current.account_id}"
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-frontend"
+    Name = "${var.name_prefix}-frontend-${data.aws_caller_identity.current.account_id}"
   })
 }
 
