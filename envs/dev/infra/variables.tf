@@ -418,3 +418,23 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+# ========================================
+# S3
+# ========================================
+
+variable "cors_allowed_origins" {
+  description = "Allowed origins for image bucket CORS"
+  type        = list(string)
+  default     = ["*"]
+}
+
+# ========================================
+# CloudFront
+# ========================================
+
+variable "alb_dns_name" {
+  description = "ALB DNS name for CloudFront API origin"
+  type        = string
+  default     = null
+}
