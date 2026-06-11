@@ -131,3 +131,32 @@ output "github_actions_ecr_policy_arn" {
   description = "Dev GitHub Actions ECR Policy ARN"
   value       = module.github_oidc_role.ecr_policy_arn
 }
+
+# ----------------------------------------
+# module "database" 활성화 이후 추가
+# ----------------------------------------
+
+output "rds_instance_id" {
+  description = "RDS instance ID"
+  value       = module.database.db_instance_id
+}
+
+output "rds_endpoint" {
+  description = "RDS endpoint"
+  value       = module.database.db_endpoint
+}
+
+output "rds_address" {
+  description = "RDS address"
+  value       = module.database.db_address
+}
+
+output "rds_port" {
+  description = "RDS port"
+  value       = module.database.db_port
+}
+
+output "rds_db_name" {
+  description = "RDS database name"
+  value       = module.database.db_name
+}

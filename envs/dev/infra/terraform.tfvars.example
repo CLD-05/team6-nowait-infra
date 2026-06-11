@@ -105,15 +105,31 @@ db_backup_retention    = 1
 
 
 # ========================================
-# ElastiCache Redis
+# RDS
 # ========================================
 
-# Dev Redis: 비용 절감용 Single Node
-redis_node_type                = "cache.t4g.micro"
-redis_replica_count            = 0
-redis_multi_az_enabled         = false
-redis_automatic_failover       = false
-redis_snapshot_retention_limit = 0
+# Dev RDS는 비용 절감을 위해 Single-AZ로 구성
+db_engine_version = "8.0"
+db_name           = "nowait"
+
+db_master_username = "admin"
+db_master_password = "<RDS_MASTER_PASSWORD>"
+
+db_instance_class        = "db.t4g.micro"
+db_allocated_storage     = 20
+db_max_allocated_storage = 100
+
+db_multi_az = false
+
+db_backup_retention = 1
+
+db_deletion_protection = false
+db_skip_final_snapshot = true
+
+db_final_snapshot_identifier = null
+
+# dev에서는 테스트 편의를 위해 true 사용 가능
+db_apply_immediately = true
 
 
 # ========================================

@@ -96,6 +96,41 @@ module "sg" {
 }
 
 
+# ========================================
+# RDS
+# ========================================
+module "database" {
+  source = "../../../modules/database"
+
+  name_prefix = var.name_prefix
+
+  private_db_subnet_ids = module.network.private_db_subnet_ids
+  security_group_id     = module.sg.rds_security_group_id
+
+  engine_version = var.db_engine_version
+  db_name        = var.db_name
+
+  master_username = var.db_master_username
+  master_password = var.db_master_password
+
+  instance_class        = var.db_instance_class
+  allocated_storage     = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage
+
+  multi_az            = var.db_multi_az
+  publicly_accessible = false
+
+  backup_retention_period = var.db_backup_retention
+
+  deletion_protection       = var.db_deletion_protection
+  skip_final_snapshot       = var.db_skip_final_snapshot
+  final_snapshot_identifier = var.db_final_snapshot_identifier
+
+  apply_immediately = var.db_apply_immediately
+
+  common_tags = local.default_tags
+}
+
 
 # ========================================
 # ElastiCache (Redis)

@@ -265,35 +265,77 @@ variable "bastion_ssh_cidr_blocks" {
 # RDS
 # ========================================
 
-# RDS 인스턴스 타입입니다.
+variable "db_engine_version" {
+  description = "RDS MySQL engine version"
+  type        = string
+  default     = "8.0"
+}
+
+variable "db_name" {
+  description = "Initial database name"
+  type        = string
+  default     = "nowait"
+}
+
+variable "db_master_username" {
+  description = "RDS master username"
+  type        = string
+  default     = "admin"
+}
+
+variable "db_master_password" {
+  description = "RDS master password"
+  type        = string
+  sensitive   = true
+}
+
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
 }
 
-# RDS Multi-AZ 여부입니다. dev는 false, prod는 true를 권장합니다.
+variable "db_allocated_storage" {
+  description = "RDS allocated storage"
+  type        = number
+  default     = 20
+}
+
+variable "db_max_allocated_storage" {
+  description = "RDS max allocated storage"
+  type        = number
+  default     = 100
+}
+
 variable "db_multi_az" {
   description = "Enable RDS Multi-AZ"
   type        = bool
 }
 
-# RDS 삭제 방지 여부입니다. dev는 false, prod는 true를 권장합니다.
+variable "db_backup_retention" {
+  description = "RDS backup retention days"
+  type        = number
+}
+
 variable "db_deletion_protection" {
   description = "Enable RDS deletion protection"
   type        = bool
 }
 
-# RDS 삭제 시 final snapshot 생략 여부입니다.
-# dev는 true, prod는 false를 권장합니다.
 variable "db_skip_final_snapshot" {
-  description = "Skip final snapshot when deleting RDS"
+  description = "Skip final snapshot on deletion"
   type        = bool
 }
 
-# RDS 백업 보관 기간입니다.
-variable "db_backup_retention" {
-  description = "RDS backup retention days"
-  type        = number
+variable "db_final_snapshot_identifier" {
+  description = "Final snapshot identifier"
+  type        = string
+  default     = null
+}
+
+variable "db_apply_immediately" {
+  description = "Apply RDS changes immediately"
+  type        = bool
+  default     = false
 }
 
 # ========================================
