@@ -31,6 +31,12 @@ resource "aws_iam_role_policy_attachment" "cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# SSM을 통한 Node 접근 권한
+resource "aws_iam_role_policy_attachment" "node_ssm" {
+  role       = aws_iam_role.node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # --------------------------------------------------------
 # EKS Control Plane 로그를 저장할 CloudWatch Log Group
 # --------------------------------------------------------
@@ -84,7 +90,11 @@ resource "aws_eks_cluster" "this" {
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster_policy,
-    aws_cloudwatch_log_group.cluster
+    aws_cloudwatch_log_group.cluster,
+    aws_iam_role_policy_attachment.node_worker,
+    aws_iam_role_policy_attachment.node_cni,
+    aws_iam_role_policy_attachment.node_ecr,
+    aws_iam_role_policy_attachment.node_ssm  # EKS Cluster가 SSM을 통해 Worker Node를 관리할 수 있도록 하는 권한입니다.
   ]
 }
 
