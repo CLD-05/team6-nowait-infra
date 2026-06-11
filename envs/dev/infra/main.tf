@@ -165,7 +165,7 @@ module "elasticache" {
 module "github_oidc_role" {
   source = "../../../modules/github_oidc_role"
 
-  name_prefix      = var.name_prefix
+  name_prefix      = "${var.team}-${var.project}"
   role_name_suffix = "dev"
 
   github_org       = var.github_org
