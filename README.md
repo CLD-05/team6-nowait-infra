@@ -195,12 +195,12 @@ condition {
 
 | 항목 | 값 |
 |---|---|
-| AWS Account ID | `194722398200` |
+| AWS Account ID | team6-dev/prod account |
 | Region | `ap-northeast-2` |
 | 필수 태그 | `Team = "team6"` |
 | IAM Role 네이밍 | `team6-*` |
 | IAM Permissions Boundary | `arn:aws:iam::194722398200:policy/TeamRuntimeBoundary` |
-| Terraform State 백엔드 | S3 `tfstate-lionkdt5-team6`, `use_lockfile = true` |
+| Terraform State 백엔드 | 각 환경별 지정 S3 Bucket |
 | Terraform 버전 명시 | `= 1.15.3` (`>=` 사용 금지) |
 
 ---
