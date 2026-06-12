@@ -159,67 +159,6 @@ module "elasticache" {
 }
 
 # ========================================
-# Secrets
-# RDS / Redis / JWT application secrets
-#
-# RDS, Redis 생성 이후 해당 접속 정보를 SSM Parameter Store에 저장합니다.
-# External Secrets Operator는 platform-addons 단계에서 이 경로를 읽습니다.
-# ========================================
-module "secrets" {
-  source = "../../../modules/secrets"
-
-  team        = var.team
-  project     = var.project
-  environment = var.environment
-  name_prefix = var.name_prefix
-
-  # RDS 접속 정보
-  rds_host     = module.database.db_address
-  rds_port     = tostring(module.database.db_port)
-  rds_database = module.database.db_name
-  rds_username = var.db_master_username
-  rds_password = var.db_master_password
-
-  # Redis 접속 정보
-  redis_host = module.elasticache.primary_endpoint_address
-  redis_port = tostring(module.elasticache.port)
-
-  # 앱 비밀값
-  jwt_secret = var.jwt_secret
-
-  common_tags = local.default_tags
-
-  depends_on = [
-    module.database,
-    module.elasticache
-  ]
-}
-
-
-# ========================================
-# GitHub OIDC Role
-# ========================================
-module "github_oidc_role" {
-  source = "../../../modules/github_oidc_role"
-
-  name_prefix      = "${var.team}-${var.project}"
-  role_name_suffix = "dev"
-
-  github_org       = var.github_org
-  github_repo      = var.github_repo
-  allowed_branches = ["develop"]
-
-  github_oidc_provider_arn = var.github_oidc_provider_arn
-  ecr_repository_arn       = var.ecr_repository_arn
-
-  ecr_access = "push"
-
-  iam_role_permissions_boundary = var.iam_role_permissions_boundary
-
-  common_tags = local.default_tags
-}
-
-# ========================================
 # S3
 # Image Bucket / Frontend Bucket
 #
@@ -247,3 +186,76 @@ module "s3" {
 
   common_tags = local.default_tags
 }
+
+# ========================================
+# Secrets
+# RDS / Redis / JWT application secrets
+#
+# RDS, Redis 생성 이후 해당 접속 정보를 SSM Parameter Store에 저장합니다.
+# External Secrets Operator는 platform-addons 단계에서 이 경로를 읽습니다.
+# ========================================
+module "secrets" {
+  source = "../../../modules/secrets"
+
+  team        = var.team
+  project     = var.project
+  environment = var.environment
+  name_prefix = var.name_prefix
+
+  # RDS 접속 정보
+  rds_host     = module.database.db_address
+  rds_port     = tostring(module.database.db_port)
+  rds_database = module.database.db_name
+  rds_username = var.db_master_username
+  rds_password = var.db_master_password
+
+  # Redis 접속 정보
+  redis_host = module.elasticache.primary_endpoint_address
+  redis_port = tostring(module.elasticache.port)
+
+  # Application Secret (JWT)
+  jwt_secret = var.jwt_secret
+
+
+  # AWS / S3 이미지 업로드 설정
+  aws_region      = var.region
+  s3_image_bucket = module.s3.image_bucket_id
+  s3_image_prefix = var.s3_image_prefix
+
+
+  # Backend CORS 설정
+  app_allowed_origins = var.app_allowed_origins
+
+  common_tags = local.default_tags
+
+  depends_on = [
+    module.database,
+    module.elasticache,
+    module.s3
+  ]
+}
+
+
+# ========================================
+# GitHub OIDC Role
+# ========================================
+module "github_oidc_role" {
+  source = "../../../modules/github_oidc_role"
+
+  name_prefix      = "${var.team}-${var.project}"
+  role_name_suffix = "dev"
+
+  github_org       = var.github_org
+  github_repo      = var.github_repo
+  allowed_branches = ["develop"]
+
+  github_oidc_provider_arn = var.github_oidc_provider_arn
+  ecr_repository_arn       = var.ecr_repository_arn
+
+  ecr_access = "push"
+
+  iam_role_permissions_boundary = var.iam_role_permissions_boundary
+
+  common_tags = local.default_tags
+}
+

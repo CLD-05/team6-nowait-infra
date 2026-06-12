@@ -181,6 +181,13 @@ frontend_bucket_enabled = false
 # CloudFront는 prod에서만 사용합니다.
 cloudfront_enabled = false
 
+
+# S3 이미지 업로드 object key prefix
+# 예:
+# images/restaurants/uuid.jpg
+# images/menus/uuid.jpg
+s3_image_prefix = "images/"
+
 # dev 개발 서버 주소
 # CRA: http://localhost:3000
 # Vite: http://localhost:5173
@@ -192,6 +199,8 @@ cors_allowed_origins = [
 # dev에서는 CloudFront를 사용하지 않으므로 null입니다.
 # prod에서 CloudFront를 사용할 때 ALB DNS name을 넣습니다.
 alb_dns_name = null
+
+
 
 
 # ========================================

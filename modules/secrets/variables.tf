@@ -65,3 +65,31 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+# ========================================
+# AWS / S3 Application Config
+# ========================================
+
+variable "aws_region" {
+  description = "AWS region for application"
+  type        = string
+}
+
+variable "s3_image_bucket" {
+  description = "S3 image bucket name for image upload"
+  type        = string
+}
+
+variable "s3_image_prefix" {
+  description = "S3 object key prefix for image upload"
+  type        = string
+}
+
+# ========================================
+# Application CORS Config
+# ========================================
+
+variable "app_allowed_origins" {
+  description = "Allowed origins for backend application CORS"
+  type        = list(string)
+}

@@ -383,6 +383,11 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+variable "app_allowed_origins" {
+  description = "Allowed origins for backend application CORS"
+  type        = list(string)
+}
+
 # ========================================
 # S3 / CloudFront
 # ========================================
@@ -427,6 +432,12 @@ variable "cors_allowed_origins" {
   description = "Allowed origins for image bucket CORS"
   type        = list(string)
   default     = ["*"]
+}
+
+variable "s3_image_prefix" {
+  description = "S3 object key prefix for image upload"
+  type        = string
+  default     = "images/"
 }
 
 # ========================================
