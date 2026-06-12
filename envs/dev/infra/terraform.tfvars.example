@@ -97,7 +97,7 @@ viewer_principal_arns = [
 # ========================================
 
 # Dev RDS는 비용 절감을 위해 Single-AZ로 구성
-db_engine_version = "8.0"
+db_engine_version = "8.0" 
 db_name           = "nowait"
 
 db_master_username = "admin"
