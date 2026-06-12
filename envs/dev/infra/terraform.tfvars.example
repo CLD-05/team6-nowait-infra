@@ -96,18 +96,6 @@ viewer_principal_arns = [
 # RDS
 # ========================================
 
-# Dev RDS: 비용 절감용 Single-AZ
-db_instance_class      = "db.t4g.micro"
-db_multi_az            = false
-db_deletion_protection = false
-db_skip_final_snapshot = true
-db_backup_retention    = 1
-
-
-# ========================================
-# RDS
-# ========================================
-
 # Dev RDS는 비용 절감을 위해 Single-AZ로 구성
 db_engine_version = "8.0"
 db_name           = "nowait"
