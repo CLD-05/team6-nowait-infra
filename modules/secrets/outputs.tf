@@ -1,5 +1,5 @@
 output "secret_prefix" {
-  description = "SSM Parameter Store prefix for this environment"
+  description = "Secrets Manager secret prefix for this environment"
   value       = var.secret_prefix
 }
 

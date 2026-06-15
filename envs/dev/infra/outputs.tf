@@ -165,12 +165,19 @@ output "rds_db_name" {
 # module "secrets" 활성화 이후 추가
 # ----------------------------------------
 
-output "secrets_parameter_prefix" {
-  value = module.secrets.parameter_prefix
+output "secret_prefix" {
+  description = "Secrets Manager secret prefix"
+  value       = module.secrets.secret_prefix
 }
 
-output "secrets_parameter_names" {
-  value = module.secrets.parameter_names
+output "secret_names" {
+  description = "Secrets Manager secret names"
+  value       = module.secrets.secret_names
+}
+
+output "secret_arns" {
+  description = "Secrets Manager secret ARNs"
+  value       = module.secrets.secret_arns
 }
 
 # ----------------------------------------

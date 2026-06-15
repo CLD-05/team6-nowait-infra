@@ -37,3 +37,8 @@ output "db_subnet_group_name" {
   description = "RDS subnet group name"
   value       = aws_db_subnet_group.this.name
 }
+
+output "master_user_secret_arn" {
+  description = "RDS managed master user secret ARN"
+  value       = try(aws_db_instance.this.master_user_secret[0].secret_arn, null)
+}

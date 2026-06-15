@@ -129,3 +129,16 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "manage_master_user_password" {
+  description = "Whether RDS manages the master user password in Secrets Manager"
+  type        = bool
+  default     = true
+}
+
+variable "master_password" {
+  description = "RDS master password. Used only when manage_master_user_password is false."
+  type        = string
+  sensitive   = true
+  default     = null
+}

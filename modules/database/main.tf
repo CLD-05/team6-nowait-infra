@@ -55,9 +55,11 @@ resource "aws_db_instance" "this" {
   engine_version = var.engine_version
   instance_class = var.instance_class
 
-  db_name  = var.db_name
   username = var.master_username
-  password = var.master_password
+
+  password = var.manage_master_user_password ? null : var.master_password
+
+  manage_master_user_password = var.manage_master_user_password
 
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage

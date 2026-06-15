@@ -115,6 +115,9 @@ module "database" {
   master_username = var.db_master_username
   master_password = var.db_master_password
 
+  manage_master_user_password = true
+  master_password             = null
+
   instance_class        = var.db_instance_class
   allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_max_allocated_storage

@@ -1,23 +1,3 @@
-variable "team" {
-  description = "Team tag value"
-  type        = string
-}
-
-variable "project" {
-  description = "Project tag value"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-}
-
-variable "name_prefix" {
-  description = "Common resource name prefix"
-  type        = string
-}
-
 
 variable "common_tags" {
   description = "Common tags"
