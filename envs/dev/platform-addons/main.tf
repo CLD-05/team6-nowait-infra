@@ -31,17 +31,17 @@ module "addons" {
   image_bucket_arn               = var.image_bucket_arn
 
   # KEDA
-enable_keda        = var.enable_keda
-keda_chart_version = var.keda_chart_version
-keda_values_file   = var.keda_values_file
+  enable_keda        = var.enable_keda
+  keda_chart_version = var.keda_chart_version
+  keda_values_file   = "${path.module}/helm-values/keda-values.yaml"
 
-# Karpenter
-enable_karpenter        = var.enable_karpenter
-karpenter_chart_version = var.karpenter_chart_version
-karpenter_values_file   = var.karpenter_values_file
+  # Karpenter
+  enable_karpenter        = var.enable_karpenter
+  karpenter_chart_version = var.karpenter_chart_version
+  karpenter_values_file   = "${path.module}/helm-values/karpenter-values.yaml"
 
-# Monitoring
-enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
-kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version
-kube_prometheus_stack_values_file   = var.kube_prometheus_stack_values_file
+  # Monitoring
+  enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
+  kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version
+  kube_prometheus_stack_values_file   = "${path.module}/helm-values/kube-prometheus-stack-values.yaml"
 }

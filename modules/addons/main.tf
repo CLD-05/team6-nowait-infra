@@ -373,7 +373,7 @@ resource "helm_release" "eso" {
 # External Secrets Operator IAM Role (Pod Identity)
 # -------------------------------------------------------------------
 #
-# External Secrets Operator가 AWS SSM Parameter Store를 읽기 위한 IAM Role입니다.
+# External Secrets Operator가 AWS Secrets Manager를 읽기 위한 IAM Role입니다.
 #
 # 연결 구조:
 #
@@ -383,7 +383,7 @@ resource "helm_release" "eso" {
 #   ↓
 # team6-nowait-dev-eso-role
 #   ↓
-# SSM Parameter Store read policy
+# Secrets Manager read policy
 # -------------------------------------------------------------------
 resource "aws_iam_role" "eso" {
   count = var.enable_eso_pod_identity ? 1 : 0

@@ -283,11 +283,6 @@ variable "db_master_username" {
   default     = "admin"
 }
 
-variable "db_master_password" {
-  description = "RDS master password"
-  type        = string
-  sensitive   = true
-}
 
 variable "db_instance_class" {
   description = "RDS instance class"

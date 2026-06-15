@@ -113,10 +113,8 @@ module "database" {
   db_name        = var.db_name
 
   master_username = var.db_master_username
-  master_password = var.db_master_password
 
   manage_master_user_password = true
-  master_password             = null
 
   instance_class        = var.db_instance_class
   allocated_storage     = var.db_allocated_storage
@@ -135,7 +133,6 @@ module "database" {
 
   common_tags = local.default_tags
 }
-
 
 # ========================================
 # ElastiCache (Redis)
@@ -208,11 +205,6 @@ module "secrets" {
     api = {
       name_suffix = "api"
       description = "Application secrets for NoWait API in dev"
-    }
-
-    db = {
-      name_suffix = "db"
-      description = "Database credentials for NoWait in dev"
     }
 
     redis = {

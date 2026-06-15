@@ -180,6 +180,11 @@ output "secret_arns" {
   value       = module.secrets.secret_arns
 }
 
+output "rds_master_user_secret_arn" {
+  description = "RDS managed master user secret ARN"
+  value       = module.database.master_user_secret_arn
+}
+
 # ----------------------------------------
 # module "s3" 활성화 이후 추가
 # ----------------------------------------

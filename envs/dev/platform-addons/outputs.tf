@@ -56,7 +56,7 @@ output "eso_role_arn" {
 }
 
 output "eso_policy_arn" {
-  description = "External Secrets Operator SSM read policy ARN"
+  description = "External Secrets Operator Secrets Manager read policy ARN"
   value       = module.addons.eso_policy_arn
 }
 

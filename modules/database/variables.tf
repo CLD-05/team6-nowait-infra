@@ -44,13 +44,6 @@ variable "master_username" {
   default     = "admin"
 }
 
-# RDS 관리자 비밀번호
-variable "master_password" {
-  description = "RDS master password"
-  type        = string
-  sensitive   = true
-}
-
 # RDS 인스턴스 타입
 variable "instance_class" {
   description = "RDS instance class"

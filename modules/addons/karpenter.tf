@@ -81,6 +81,8 @@ locals {
   ]
 }
 
+
+
 # -------------------------------------------------------------------
 # Karpenter controller IAM Policy
 # -------------------------------------------------------------------
@@ -184,6 +186,21 @@ resource "aws_iam_policy" "karpenter_controller" {
 }
 
 # -------------------------------------------------------------------
+# Karpenter Node Access Entry
+# -------------------------------------------------------------------
+resource "aws_eks_access_entry" "karpenter_node" {
+  count = var.enable_karpenter ? 1 : 0
+
+  cluster_name  = var.cluster_name
+  principal_arn = aws_iam_role.karpenter_node[0].arn
+  type          = "EC2_LINUX"
+
+  depends_on = [
+    aws_iam_role_policy_attachment.karpenter_node
+  ]
+}
+
+# -------------------------------------------------------------------
 # Karpenter controller role attachment
 # -------------------------------------------------------------------
 resource "aws_iam_role_policy_attachment" "karpenter_controller" {
@@ -240,3 +257,4 @@ resource "helm_release" "karpenter" {
     aws_eks_pod_identity_association.karpenter
   ]
 }
+

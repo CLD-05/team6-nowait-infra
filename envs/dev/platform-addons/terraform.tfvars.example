@@ -66,12 +66,19 @@ eso_chart_version = "0.14.4"
 
 
 # ========================================
-# External Secrets Operator / Secrets Manager
+# External Secrets Operator / Pod Identity
 # ========================================
+
+enable_eso_pod_identity = true
+
+# envs/dev/infra에서 생성된 Secrets Manager ARN 목록
+# 확인 방법:
+# cd envs/dev/infra
+# terraform output secret_arns
 external_secrets_secret_arns = [
-  "<DEV_API_SECRET_ARN>",
-  "<DEV_DB_SECRET_ARN>",
-  "<DEV_REDIS_SECRET_ARN>"
+  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/api-xxxxxx",
+  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/db-xxxxxx",
+  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/redis-xxxxxx"
 ]
 
 # ========================================
@@ -79,21 +86,18 @@ external_secrets_secret_arns = [
 # ========================================
 enable_keda        = true
 keda_chart_version = "<FIXED_KEDA_CHART_VERSION>"
-keda_values_file   = "./helm-values/keda-values.yaml"
 
 # ========================================
 # Karpenter
 # ========================================
 enable_karpenter        = true
 karpenter_chart_version = "<FIXED_KARPENTER_CHART_VERSION>"
-karpenter_values_file   = "./helm-values/karpenter-values.yaml"
 
 # ========================================
 # Monitoring
 # ========================================
 enable_kube_prometheus_stack        = true
 kube_prometheus_stack_chart_version = "<FIXED_KUBE_PROMETHEUS_STACK_CHART_VERSION>"
-kube_prometheus_stack_values_file   = "./helm-values/kube-prometheus-stack-values.yaml"
 
 # ========================================
 # NoWait API Pod Identity

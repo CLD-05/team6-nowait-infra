@@ -97,7 +97,6 @@ variable "enable_eso_pod_identity" {
 variable "external_secrets_secret_arns" {
   description = "Secrets Manager secret ARNs that ESO can read"
   type        = list(string)
-  default     = []
 }
 
 # ========================================
