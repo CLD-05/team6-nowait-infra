@@ -113,24 +113,7 @@ output "redis_port" {
   value       = module.elasticache.port
 }
 
-# ----------------------------------------
-# module "github_oidc" 활성화 이후 추가
-# ----------------------------------------
 
-output "github_actions_role_name" {
-  description = "Dev GitHub Actions IAM Role name"
-  value       = module.github_oidc_role.role_name
-}
-
-output "github_actions_role_arn" {
-  description = "Dev GitHub Actions IAM Role ARN"
-  value       = module.github_oidc_role.role_arn
-}
-
-output "github_actions_ecr_policy_arn" {
-  description = "Dev GitHub Actions ECR Policy ARN"
-  value       = module.github_oidc_role.ecr_policy_arn
-}
 
 # ----------------------------------------
 # module "database" 활성화 이후 추가
