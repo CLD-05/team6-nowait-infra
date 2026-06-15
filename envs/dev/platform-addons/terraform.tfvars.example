@@ -100,7 +100,7 @@ keda_chart_version = "2.20.0"
 # Karpenter
 # ========================================
 enable_karpenter        = true
-karpenter_chart_version = "v1.13.0"
+karpenter_chart_version = "1.13.0"
 
 # ========================================
 # Monitoring

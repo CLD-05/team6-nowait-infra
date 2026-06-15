@@ -413,7 +413,6 @@ variable "log_retention_days" {
 variable "cors_allowed_origins" {
   description = "Allowed origins for image bucket CORS"
   type        = list(string)
-  default     = ["*"]
 }
 
 variable "s3_image_prefix" {

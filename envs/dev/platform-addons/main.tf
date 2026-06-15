@@ -26,7 +26,7 @@ module "addons" {
   argocd_values_file   = var.argocd_values_file
 
   # External Secrets Operator Pod Identity
-  enable_eso_pod_identity     = var.enable_eso_pod_identity
+  enable_eso_pod_identity      = var.enable_eso_pod_identity
   external_secrets_secret_arns = var.external_secrets_secret_arns
 
   # NoWait API Pod Identity
