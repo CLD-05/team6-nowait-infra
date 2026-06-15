@@ -27,4 +27,11 @@ locals {
 
   eso_namespace       = "external-secrets"
   eso_service_account = "external-secrets"
+
+  keda_namespace = "keda"
+  
+  monitoring_namespace = "monitoring"
+
+  karpenter_namespace       = "karpenter"
+  karpenter_service_account = "karpenter"
 }

@@ -58,7 +58,7 @@ output "eso_role_arn" {
 }
 
 output "eso_policy_arn" {
-  description = "External Secrets Operator SSM read policy ARN"
+  description = "External Secrets Operator Secrets Manager read policy ARN"
   value       = var.enable_eso_pod_identity ? aws_iam_policy.eso[0].arn : null
 }
 
@@ -84,4 +84,45 @@ output "nowait_api_s3_policy_arn" {
 output "nowait_api_pod_identity_association_id" {
   description = "NoWait API Pod Identity Association ID"
   value       = var.enable_nowait_api_pod_identity ? aws_eks_pod_identity_association.nowait_api[0].association_id : null
+}
+
+
+# ----------------------------------------
+# KEDA
+# ----------------------------------------
+output "keda_helm_release_name" {
+  description = "KEDA Helm release name"
+  value       = var.enable_keda ? helm_release.keda[0].name : null
+}
+
+# ----------------------------------------
+# kube-prometheus-stack
+# ----------------------------------------
+
+output "kube_prometheus_stack_helm_release_name" {
+  description = "kube-prometheus-stack Helm release name"
+  value       = var.enable_kube_prometheus_stack ? helm_release.kube_prometheus_stack[0].name : null
+}
+
+# ----------------------------------------
+# Karpenter
+# ----------------------------------------
+output "karpenter_controller_role_arn" {
+  description = "Karpenter controller IAM Role ARN"
+  value       = var.enable_karpenter ? aws_iam_role.karpenter_controller[0].arn : null
+}
+
+output "karpenter_node_role_name" {
+  description = "Karpenter node IAM Role name"
+  value       = var.enable_karpenter ? aws_iam_role.karpenter_node[0].name : null
+}
+
+output "karpenter_node_role_arn" {
+  description = "Karpenter node IAM Role ARN"
+  value       = var.enable_karpenter ? aws_iam_role.karpenter_node[0].arn : null
+}
+
+output "karpenter_helm_release_name" {
+  description = "Karpenter Helm release name"
+  value       = var.enable_karpenter ? helm_release.karpenter[0].name : null
 }

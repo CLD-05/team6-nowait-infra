@@ -1,19 +1,20 @@
-output "parameter_prefix" {
+output "secret_prefix" {
   description = "SSM Parameter Store prefix for this environment"
-  value       = local.parameter_prefix
+  value       = var.secret_prefix
 }
 
-output "parameter_names" {
-  description = "Created SSM parameter names"
-  value       = [for parameter in aws_ssm_parameter.app : parameter.name]
+output "secret_names" {
+  description = "Secrets Manager secret names"
+  value = {
+    for key, secret in aws_secretsmanager_secret.this :
+    key => secret.name
+  }
 }
 
-output "rds_password_parameter_name" {
-  description = "RDS password parameter name"
-  value       = aws_ssm_parameter.app["/rds/password"].name
-}
-
-output "jwt_secret_parameter_name" {
-  description = "JWT secret parameter name"
-  value       = aws_ssm_parameter.app["/jwt/secret"].name
+output "secret_arns" {
+  description = "Secrets Manager secret ARNs"
+  value = {
+    for key, secret in aws_secretsmanager_secret.this :
+    key => secret.arn
+  }
 }

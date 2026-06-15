@@ -28,6 +28,8 @@ module "network" {
   # subnet에 붙일 Kubernetes cluster tag
   eks_cluster_name = local.eks_cluster_name
 
+  enable_karpenter_discovery_tags = true
+
   common_tags = local.default_tags
 }
 
@@ -188,53 +190,36 @@ module "s3" {
 }
 
 # ========================================
-# Secrets
-# RDS / Redis / JWT application secrets
-#
-# RDS, Redis 생성 이후 해당 접속 정보를 SSM Parameter Store에 저장합니다.
-# External Secrets Operator는 platform-addons 단계에서 이 경로를 읽습니다.
+# Secrets Manager
 # ========================================
 module "secrets" {
   source = "../../../modules/secrets"
 
-  team        = var.team
-  project     = var.project
-  environment = var.environment
-  name_prefix = var.name_prefix
+  secret_prefix = "team6-nowait/${var.environment}"
 
-  # RDS 접속 정보
-  rds_host     = module.database.db_address
-  rds_port     = tostring(module.database.db_port)
-  rds_database = module.database.db_name
-  rds_username = var.db_master_username
-  rds_password = var.db_master_password
+  # dev는 테스트 환경이므로 0 또는 7 선택
+  # 실수 방지를 위해 7을 추천
+  recovery_window_in_days = 7
 
-  # Redis 접속 정보
-  redis_host = module.elasticache.primary_endpoint_address
-  redis_port = tostring(module.elasticache.port)
+  secrets = {
+    api = {
+      name_suffix = "api"
+      description = "Application secrets for NoWait API in dev"
+    }
 
-  # Application Secret (JWT)
-  jwt_secret = var.jwt_secret
+    db = {
+      name_suffix = "db"
+      description = "Database credentials for NoWait in dev"
+    }
 
-
-  # AWS / S3 이미지 업로드 설정
-  aws_region      = var.region
-  s3_image_bucket = module.s3.image_bucket_id
-  s3_image_prefix = var.s3_image_prefix
-
-
-  # Backend CORS 설정
-  app_allowed_origins = var.app_allowed_origins
+    redis = {
+      name_suffix = "redis"
+      description = "Redis credentials for NoWait in dev"
+    }
+  }
 
   common_tags = local.default_tags
-
-  depends_on = [
-    module.database,
-    module.elasticache,
-    module.s3
-  ]
 }
-
 
 # ========================================
 # GitHub OIDC Role

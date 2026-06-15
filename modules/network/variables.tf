@@ -61,3 +61,9 @@ variable "enable_dns_support" {
   type        = bool
   default     = true
 }
+
+variable "enable_karpenter_discovery_tags" {
+  description = "Whether to add Karpenter discovery tags to private app subnets"
+  type        = bool
+  default     = false
+}

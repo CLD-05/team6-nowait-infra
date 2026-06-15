@@ -18,47 +18,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "rds_host" {
-  description = "RDS host address"
-  type        = string
-}
-
-variable "rds_port" {
-  description = "RDS port"
-  type        = string
-}
-
-variable "rds_database" {
-  description = "RDS database name"
-  type        = string
-}
-
-variable "rds_username" {
-  description = "RDS username"
-  type        = string
-}
-
-variable "rds_password" {
-  description = "RDS password"
-  type        = string
-  sensitive   = true
-}
-
-variable "redis_host" {
-  description = "Redis primary endpoint"
-  type        = string
-}
-
-variable "redis_port" {
-  description = "Redis port"
-  type        = string
-}
-
-variable "jwt_secret" {
-  description = "JWT secret for application"
-  type        = string
-  sensitive   = true
-}
 
 variable "common_tags" {
   description = "Common tags"
@@ -66,30 +25,22 @@ variable "common_tags" {
   default     = {}
 }
 
-# ========================================
-# AWS / S3 Application Config
-# ========================================
-
-variable "aws_region" {
-  description = "AWS region for application"
+variable "secret_prefix" {
+  description = "Secrets Manager secret prefix. Example: team6-nowait/dev"
   type        = string
 }
 
-variable "s3_image_bucket" {
-  description = "S3 image bucket name for image upload"
-  type        = string
+variable "recovery_window_in_days" {
+  description = "Number of days before Secrets Manager permanently deletes a secret"
+  type        = number
+  default     = 7
 }
 
-variable "s3_image_prefix" {
-  description = "S3 object key prefix for image upload"
-  type        = string
+variable "secrets" {
+  description = "Secrets Manager secret containers to create"
+  type = map(object({
+    name_suffix = string
+    description = string
+  }))
 }
 
-# ========================================
-# Application CORS Config
-# ========================================
-
-variable "app_allowed_origins" {
-  description = "Allowed origins for backend application CORS"
-  type        = list(string)
-}

@@ -1,17 +1,21 @@
 # ========================================
-# SSM Parameter Store
-# RDS / Redis / Application Secrets
+# AWS Secrets Manager
 # ========================================
+#
+# This module creates secret containers only.
+# Do NOT store actual secret values in Terraform,
+# because secret values can remain in tfstate.
+# Actual values should be inserted using AWS Console or AWS CLI.
 
-resource "aws_ssm_parameter" "app" {
-  for_each = local.app_parameters
+resource "aws_secretsmanager_secret" "this" {
+  for_each = var.secrets
 
-  name      = "${local.parameter_prefix}${each.key}"
-  type      = each.value.type
-  value     = each.value.value
-  overwrite = true
+  name        = "${var.secret_prefix}/${each.value.name_suffix}"
+  description = each.value.description
+
+  recovery_window_in_days = var.recovery_window_in_days
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}${replace(each.key, "/", "-")}"
+    Name = "${var.secret_prefix}/${each.value.name_suffix}"
   })
 }

@@ -69,12 +69,18 @@ resource "aws_subnet" "private_app" {
   cidr_block        = var.private_app_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-private-app-${count.index + 1}"
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.name_prefix}-private-app-${count.index + 1}"
 
-    "kubernetes.io/role/internal-elb"              = "1"
-    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
-  })
+      "kubernetes.io/role/internal-elb"               = "1"
+      "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    },
+    var.enable_karpenter_discovery_tags ? {
+      "karpenter.sh/discovery" = var.eks_cluster_name
+    } : {}
+  )
 }
 
 # ========================================

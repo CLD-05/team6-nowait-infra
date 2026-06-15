@@ -21,12 +21,27 @@ module "addons" {
   eso_chart_version            = var.eso_chart_version
 
   # External Secrets Operator Pod Identity
-  enable_eso_pod_identity  = var.enable_eso_pod_identity
-  secrets_parameter_prefix = var.secrets_parameter_prefix
+  enable_eso_pod_identity     = var.enable_eso_pod_identity
+  external_secrets_secret_arns = var.external_secrets_secret_arns
 
   # NoWait API Pod Identity
   enable_nowait_api_pod_identity = var.enable_nowait_api_pod_identity
   nowait_api_namespace           = var.nowait_api_namespace
   nowait_api_service_account     = var.nowait_api_service_account
   image_bucket_arn               = var.image_bucket_arn
+
+  # KEDA
+enable_keda        = var.enable_keda
+keda_chart_version = var.keda_chart_version
+keda_values_file   = var.keda_values_file
+
+# Karpenter
+enable_karpenter        = var.enable_karpenter
+karpenter_chart_version = var.karpenter_chart_version
+karpenter_values_file   = var.karpenter_values_file
+
+# Monitoring
+enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
+kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version
+kube_prometheus_stack_values_file   = var.kube_prometheus_stack_values_file
 }

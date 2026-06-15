@@ -416,36 +416,26 @@ resource "aws_iam_role" "eso" {
 resource "aws_iam_policy" "eso" {
   count = var.enable_eso_pod_identity ? 1 : 0
 
-  name = "${var.name_prefix}-eso-ssm-read-policy"
+  name = "${var.name_prefix}-eso-secretsmanager-read-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ReadNowaitParameters"
+        Sid    = "ReadNowaitSecrets"
         Effect = "Allow"
         Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath"
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecretVersionIds"
         ]
-        Resource = [
-          "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter${var.secrets_parameter_prefix}/*"
-        ]
-      },
-      {
-        Sid    = "DescribeParameters"
-        Effect = "Allow"
-        Action = [
-          "ssm:DescribeParameters"
-        ]
-        Resource = "*"
+        Resource = var.external_secrets_secret_arns
       }
     ]
   })
 
   tags = {
-    Name = "${var.name_prefix}-eso-ssm-read-policy"
+    Name = "${var.name_prefix}-eso-secretsmanager-read-policy"
     Team = var.team
   }
 }
@@ -612,5 +602,65 @@ resource "aws_eks_pod_identity_association" "nowait_api" {
   depends_on = [
     aws_eks_addon.this,
     aws_iam_role_policy_attachment.nowait_api_s3
+  ]
+}
+
+# -------------------------------------------------------------------
+# KEDA
+# -------------------------------------------------------------------
+resource "kubernetes_namespace" "keda" {
+  count = var.enable_keda ? 1 : 0
+
+  metadata {
+    name = local.keda_namespace
+  }
+}
+
+resource "helm_release" "keda" {
+  count = var.enable_keda ? 1 : 0
+
+  name       = "keda"
+  namespace  = kubernetes_namespace.keda[0].metadata[0].name
+  repository = "https://kedacore.github.io/charts"
+  chart      = "keda"
+  version    = var.keda_chart_version
+
+  values = var.keda_values_file != null ? [
+    file(var.keda_values_file)
+  ] : []
+
+  depends_on = [
+    kubernetes_namespace.keda,
+    aws_eks_addon.this
+  ]
+}
+
+# -------------------------------------------------------------------
+# kube-prometheus-stack
+# -------------------------------------------------------------------
+resource "kubernetes_namespace" "monitoring" {
+  count = var.enable_kube_prometheus_stack ? 1 : 0
+
+  metadata {
+    name = local.monitoring_namespace
+  }
+}
+
+resource "helm_release" "kube_prometheus_stack" {
+  count = var.enable_kube_prometheus_stack ? 1 : 0
+
+  name       = "kube-prometheus-stack"
+  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "kube-prometheus-stack"
+  version    = var.kube_prometheus_stack_chart_version
+
+  values = var.kube_prometheus_stack_values_file != null ? [
+    file(var.kube_prometheus_stack_values_file)
+  ] : []
+
+  depends_on = [
+    kubernetes_namespace.monitoring,
+    helm_release.metrics_server
   ]
 }

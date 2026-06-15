@@ -94,9 +94,10 @@ variable "enable_eso_pod_identity" {
   default     = true
 }
 
-variable "secrets_parameter_prefix" {
-  description = "SSM Parameter Store prefix that ESO can read"
-  type        = string
+variable "external_secrets_secret_arns" {
+  description = "Secrets Manager secret ARNs that ESO can read"
+  type        = list(string)
+  default     = []
 }
 
 # ========================================
@@ -123,6 +124,60 @@ variable "nowait_api_service_account" {
 
 variable "image_bucket_arn" {
   description = "S3 image bucket ARN for NoWait API"
+  type        = string
+  default     = null
+}
+
+# ========================================
+# KEDA / Kerpenter / Monitoring
+# ========================================
+variable "enable_keda" {
+  description = "Enable KEDA"
+  type        = bool
+  default     = true
+}
+
+variable "keda_chart_version" {
+  description = "KEDA Helm chart version"
+  type        = string
+}
+
+variable "keda_values_file" {
+  description = "Path to KEDA values file"
+  type        = string
+  default     = null
+}
+
+variable "enable_karpenter" {
+  description = "Enable Karpenter"
+  type        = bool
+  default     = true
+}
+
+variable "karpenter_chart_version" {
+  description = "Karpenter Helm chart version"
+  type        = string
+}
+
+variable "karpenter_values_file" {
+  description = "Path to Karpenter values file"
+  type        = string
+  default     = null
+}
+
+variable "enable_kube_prometheus_stack" {
+  description = "Enable kube-prometheus-stack"
+  type        = bool
+  default     = true
+}
+
+variable "kube_prometheus_stack_chart_version" {
+  description = "kube-prometheus-stack Helm chart version"
+  type        = string
+}
+
+variable "kube_prometheus_stack_values_file" {
+  description = "Path to kube-prometheus-stack values file"
   type        = string
   default     = null
 }

@@ -83,3 +83,31 @@ output "nowait_api_pod_identity_association_id" {
   description = "NoWait API Pod Identity Association ID"
   value       = module.addons.nowait_api_pod_identity_association_id
 }
+
+# ========================================
+# KEDA / Kerpenter / Monitoring
+# ========================================
+output "keda_helm_release_name" {
+  description = "KEDA Helm release name"
+  value       = module.addons.keda_helm_release_name
+}
+
+output "kube_prometheus_stack_helm_release_name" {
+  description = "kube-prometheus-stack Helm release name"
+  value       = module.addons.kube_prometheus_stack_helm_release_name
+}
+
+output "karpenter_controller_role_arn" {
+  description = "Karpenter controller IAM Role ARN"
+  value       = module.addons.karpenter_controller_role_arn
+}
+
+output "karpenter_node_role_name" {
+  description = "Karpenter node IAM Role name"
+  value       = module.addons.karpenter_node_role_name
+}
+
+output "karpenter_node_role_arn" {
+  description = "Karpenter node IAM Role ARN"
+  value       = module.addons.karpenter_node_role_arn
+}

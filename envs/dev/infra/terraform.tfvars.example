@@ -118,6 +118,17 @@ db_final_snapshot_identifier = null
 # dev에서는 테스트 편의를 위해 true 사용 가능
 db_apply_immediately = true
 
+# ========================================
+# ElastiCache Redis
+# ========================================
+
+# Dev Redis: 비용 절감용 Single Node
+redis_node_type                = "cache.t4g.medium" # 부하테스트시에는 cache.m7g.large로 변경하기
+redis_replica_count            = 0
+redis_multi_az_enabled         = false
+redis_automatic_failover       = false
+redis_snapshot_retention_limit = 0
+
 
 # ========================================
 # Bastion
@@ -160,11 +171,7 @@ github_oidc_provider_arn = "<GITHUB_OIDC_PROVIDER_ARN>"
 # arn:aws:ecr:ap-northeast-2:<AWS_ACCOUNT_ID>:repository/team6-nowait-app
 ecr_repository_arn = "<ECR_REPOSITORY_ARN>" 
 
-# ========================================
-# Application Secrets
-# ========================================
 
-jwt_secret = "<JWT_SECRET_VALUE>"
 
 
 # ========================================

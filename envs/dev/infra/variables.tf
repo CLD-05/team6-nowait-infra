@@ -373,20 +373,7 @@ variable "redis_snapshot_retention_limit" {
   default     = 0
 }
 
-# ========================================
-# Application Secrets
-# ========================================
 
-variable "jwt_secret" {
-  description = "JWT secret for NoWait API"
-  type        = string
-  sensitive   = true
-}
-
-variable "app_allowed_origins" {
-  description = "Allowed origins for backend application CORS"
-  type        = list(string)
-}
 
 # ========================================
 # S3 / CloudFront
