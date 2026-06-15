@@ -269,3 +269,115 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+
+# ========================================
+# Network DNS
+# ========================================
+variable "enable_dns_hostnames" {
+  description = "Enable DNS hostnames in VPC"
+  type        = bool
+  default     = true
+}
+
+variable "enable_dns_support" {
+  description = "Enable DNS support in VPC"
+  type        = bool
+  default     = true
+}
+
+# ========================================
+# EKS
+# ========================================
+variable "eks_cluster_version" {
+  description = "EKS Kubernetes version"
+  type        = string
+  default     = "1.34"
+}
+
+# ========================================
+# Bastion
+# ========================================
+variable "bastion_instance_type" {
+  description = "Bastion EC2 instance type"
+  type        = string
+  default     = "t3.micro"
+}
+
+# ========================================
+# RDS
+# ========================================
+variable "db_engine_version" {
+  description = "RDS MySQL engine version"
+  type        = string
+  default     = "8.0"
+}
+
+variable "db_name" {
+  description = "Initial database name"
+  type        = string
+  default     = "nowait"
+}
+
+variable "db_master_username" {
+  description = "RDS master username"
+  type        = string
+  default     = "admin"
+}
+
+variable "db_allocated_storage" {
+  description = "RDS allocated storage"
+  type        = number
+  default     = 20
+}
+
+variable "db_max_allocated_storage" {
+  description = "RDS max allocated storage"
+  type        = number
+  default     = 200
+}
+
+variable "db_final_snapshot_identifier" {
+  description = "Final snapshot identifier"
+  type        = string
+  default     = null
+}
+
+variable "db_apply_immediately" {
+  description = "Apply RDS changes immediately"
+  type        = bool
+  default     = false
+}
+
+# ========================================
+# Redis
+# ========================================
+variable "redis_snapshot_retention_limit" {
+  description = "Redis snapshot retention days. 0 = disabled."
+  type        = number
+  default     = 7
+}
+
+# ========================================
+# S3
+# ========================================
+variable "cors_allowed_origins" {
+  description = "Allowed origins for image bucket CORS"
+  type        = list(string)
+}
+
+variable "s3_image_prefix" {
+  description = "S3 object key prefix for image upload"
+  type        = string
+  default     = "images/"
+}
+
+# ========================================
+# CloudFront
+# 이번 prod 1차 범위에서는 사용하지 않음
+# ========================================
+variable "alb_dns_name" {
+  description = "ALB DNS name for CloudFront API origin"
+  type        = string
+  default     = null
+}

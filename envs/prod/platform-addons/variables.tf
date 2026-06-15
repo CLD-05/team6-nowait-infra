@@ -1,96 +1,202 @@
-# AWS 리전
 variable "region" {
   description = "AWS region"
   type        = string
   default     = "ap-northeast-2"
 }
 
-# 학원 정책상 Team 태그는 반드시 team6이어야 합니다.
 variable "team" {
-  description = "Team tag value. Must be team6."
+  description = "Team tag value"
   type        = string
   default     = "team6"
-
-  validation {
-    condition     = var.team == "team6"
-    error_message = "team must be team6 because academy policy requires Team=team6."
-  }
 }
 
-# 프로젝트 이름
 variable "project" {
   description = "Project tag value"
   type        = string
   default     = "nowait"
 }
 
-# 환경 이름
 variable "environment" {
   description = "Environment name"
   type        = string
-
-  validation {
-    condition     = contains(["dev", "prod"], var.environment)
-    error_message = "environment must be dev or prod."
-  }
 }
 
-# 리소스 이름 prefix
 variable "name_prefix" {
-  description = "Common resource name prefix. Must start with team6-."
+  description = "Common resource name prefix"
   type        = string
-
-  validation {
-    condition     = startswith(var.name_prefix, "team6-")
-    error_message = "name_prefix must start with team6-."
-  }
 }
 
-# Pod Identity Role, Add-on Role 생성 시 필수 permissions boundary
 variable "iam_role_permissions_boundary" {
-  description = "Required permissions boundary for IAM roles created by students."
+  description = "Required permissions boundary for IAM roles"
   type        = string
   default     = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 }
 
-# Add-ons를 설치할 대상 EKS Cluster 이름
 variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
 }
 
-# AWS Load Balancer Controller 설치 여부
-variable "enable_aws_load_balancer_controller" {
-  description = "Enable AWS Load Balancer Controller"
+variable "eks_addons" {
+  description = "EKS add-ons to install"
+  type        = list(string)
+
+  default = [
+    "vpc-cni",
+    "coredns",
+    "kube-proxy",
+    "eks-pod-identity-agent",
+    "aws-ebs-csi-driver"
+  ]
+}
+
+variable "addon_versions" {
+  description = "Exact EKS add-on versions"
+  type        = map(string)
+  default     = {}
+}
+
+variable "enable_ebs_csi_pod_identity" {
+  description = "Enable Pod Identity role for EBS CSI Driver"
   type        = bool
   default     = true
 }
 
-# ArgoCD 설치 여부
-variable "enable_argocd" {
-  description = "Enable ArgoCD"
+variable "vpc_id" {
+  description = "VPC ID for AWS Load Balancer Controller"
+  type        = string
+}
+
+# AWS Load Balancer Controller Helm chart 버전
+variable "lbc_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.13.0"
+}
+
+# metrics-server Helm chart 버전
+variable "metrics_server_chart_version" {
+  description = "metrics-server Helm chart version"
+  type        = string
+  default     = "3.12.2"
+}
+
+# External Secrets Operator Helm chart 버전
+variable "eso_chart_version" {
+  description = "External Secrets Operator Helm chart version"
+  type        = string
+  default     = "0.14.4"
+}
+
+variable "enable_eso_pod_identity" {
+  description = "Enable Pod Identity IAM Role for External Secrets Operator"
   type        = bool
   default     = true
 }
 
-# metrics-server 설치 여부
-variable "enable_metrics_server" {
-  description = "Enable metrics-server"
+variable "external_secrets_secret_arns" {
+  description = "Secrets Manager secret ARNs that ESO can read"
+  type        = list(string)
+}
+
+# ========================================
+# NoWait API Pod Identity
+# ========================================
+
+variable "enable_nowait_api_pod_identity" {
+  description = "Enable Pod Identity IAM Role for NoWait API"
   type        = bool
   default     = true
 }
 
-# External Secrets Operator 설치 여부
-variable "enable_external_secrets" {
-  description = "Enable External Secrets Operator"
+variable "nowait_api_namespace" {
+  description = "Kubernetes namespace for NoWait API"
+  type        = string
+  default     = "nowai-prod"
+}
+
+variable "nowait_api_service_account" {
+  description = "Kubernetes ServiceAccount name for NoWait API"
+  type        = string
+  default     = "nowait-api"
+}
+
+variable "image_bucket_arn" {
+  description = "S3 image bucket ARN for NoWait API"
+  type        = string
+  default     = null
+}
+
+# ========================================
+# KEDA / Karpenter / Monitoring
+# ========================================
+variable "enable_keda" {
+  description = "Enable KEDA"
   type        = bool
   default     = true
 }
 
-# kube-prometheus-stack 설치 여부
-# 애플리케이션 배포 이후 2차 단계에서 true로 변경합니다.
+variable "keda_chart_version" {
+  description = "KEDA Helm chart version"
+  type        = string
+}
+
+variable "keda_values_file" {
+  description = "Path to KEDA values file"
+  type        = string
+  default     = null
+}
+
+variable "enable_karpenter" {
+  description = "Enable Karpenter"
+  type        = bool
+  default     = true
+}
+
+variable "karpenter_chart_version" {
+  description = "Karpenter Helm chart version"
+  type        = string
+}
+
+variable "karpenter_values_file" {
+  description = "Path to Karpenter values file"
+  type        = string
+  default     = null
+}
+
 variable "enable_kube_prometheus_stack" {
-  description = "Enable kube-prometheus-stack. Usually false until app is deployed."
+  description = "Enable kube-prometheus-stack"
   type        = bool
-  default     = false
+  default     = true
+}
+
+variable "kube_prometheus_stack_chart_version" {
+  description = "kube-prometheus-stack Helm chart version"
+  type        = string
+}
+
+variable "kube_prometheus_stack_values_file" {
+  description = "Path to kube-prometheus-stack values file"
+  type        = string
+  default     = null
+}
+
+# ========================================
+# Argo CD
+# ========================================
+variable "enable_argocd" {
+  description = "Enable Argo CD"
+  type        = bool
+  default     = true
+}
+
+variable "argocd_chart_version" {
+  description = "Argo CD Helm chart version"
+  type        = string
+}
+
+variable "argocd_values_file" {
+  description = "Path to Argo CD values file"
+  type        = string
+  default     = null
 }

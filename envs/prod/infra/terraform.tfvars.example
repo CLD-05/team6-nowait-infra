@@ -90,16 +90,29 @@ viewer_principal_arns = [
 ]
 
 
+
 # ========================================
 # RDS
 # ========================================
+db_engine_version = "8.0"
+db_name           = "nowait"
 
-# Prod RDS: Multi-AZ로 DB HA 확보
-db_instance_class      = "db.m7g.large" # 트래픽 증가시 db.m7g.xlarge로 변경하기
-db_multi_az            = true
+db_master_username = "admin"
+
+db_instance_class        = "db.m7g.large" #트래픽 증가시 db.m7g.xlarge로 변경하기
+db_allocated_storage     = 20
+db_max_allocated_storage = 200
+
+db_multi_az = true
+
+db_backup_retention = 7
+
 db_deletion_protection = true
 db_skip_final_snapshot = false
-db_backup_retention    = 7
+
+db_final_snapshot_identifier = "team6-nowait-prod-rds-final-snapshot"
+
+db_apply_immediately = false
 
 
 # ========================================
@@ -117,10 +130,8 @@ redis_snapshot_retention_limit = 7
 # ========================================
 # Bastion
 # ========================================
-
-# Prod는 private endpoint 접근을 위해 Bastion/SSM 사용 가능
-# SSH 22번은 열지 않고 SSM Session Manager 기준
 bastion_enabled          = true
+bastion_instance_type    = "t3.micro"
 bastion_ssh_cidr_blocks = []
 
 
@@ -128,11 +139,24 @@ bastion_ssh_cidr_blocks = []
 # S3 / CloudFront
 # ========================================
 
-# Prod는 S3 + CloudFront로 React 정적 파일 배포 가능
-image_bucket_enabled    = true
-frontend_bucket_enabled = true
-cloudfront_enabled      = true
+# 이번 prod 1차 범위에서는 이미지 버킷만 생성
+image_bucket_enabled = true
 
+# React 정적 파일 배포용 S3 bucket은 이번 범위 제외
+frontend_bucket_enabled = false
+
+# CloudFront도 API/Worker 안정화 이후 생성
+cloudfront_enabled = false
+
+s3_image_prefix = "images/"
+
+# prod에서는 localhost 넣지 않음
+# 실제 프론트 도메인이 정해지기 전까지는 임시 prod 도메인 또는 빈 정책을 별도 검토
+cors_allowed_origins = [
+  "https://nowait.example.com"
+]
+
+alb_dns_name = null
 
 # ========================================
 # CloudWatch

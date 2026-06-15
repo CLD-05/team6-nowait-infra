@@ -12,3 +12,115 @@ output "environment" {
 output "iam_role_permissions_boundary" {
   value = var.iam_role_permissions_boundary
 }
+
+output "eks_addon_names" {
+  value = module.addons.eks_addon_names
+}
+
+output "eks_addon_versions" {
+  value = module.addons.eks_addon_versions
+}
+
+output "ebs_csi_role_arn" {
+  value = module.addons.ebs_csi_role_arn
+}
+
+output "lbc_role_arn" {
+  description = "AWS Load Balancer Controller Pod Identity IAM Role ARN"
+  value       = module.addons.lbc_role_arn
+}
+
+output "lbc_policy_arn" {
+  description = "AWS Load Balancer Controller IAM Policy ARN"
+  value       = module.addons.lbc_policy_arn
+}
+
+output "lbc_helm_release_name" {
+  description = "AWS Load Balancer Controller Helm release name"
+  value       = module.addons.lbc_helm_release_name
+}
+
+output "metrics_server_helm_release_name" {
+  description = "metrics-server Helm release name"
+  value       = module.addons.metrics_server_helm_release_name
+}
+
+output "eso_helm_release_name" {
+  description = "External Secrets Operator Helm release name"
+  value       = module.addons.eso_helm_release_name
+}
+
+output "eso_role_arn" {
+  description = "External Secrets Operator Pod Identity IAM Role ARN"
+  value       = module.addons.eso_role_arn
+}
+
+output "eso_policy_arn" {
+  description = "External Secrets Operator Secrets Manager read policy ARN"
+  value       = module.addons.eso_policy_arn
+}
+
+output "eso_pod_identity_association_id" {
+  description = "External Secrets Operator Pod Identity Association ID"
+  value       = module.addons.eso_pod_identity_association_id
+}
+
+# ----------------------------------------
+# NoWait API Pod Identity
+# ----------------------------------------
+
+output "nowait_api_role_arn" {
+  description = "NoWait API Pod Identity IAM Role ARN"
+  value       = module.addons.nowait_api_role_arn
+}
+
+output "nowait_api_s3_policy_arn" {
+  description = "NoWait API S3 image bucket policy ARN"
+  value       = module.addons.nowait_api_s3_policy_arn
+}
+
+output "nowait_api_pod_identity_association_id" {
+  description = "NoWait API Pod Identity Association ID"
+  value       = module.addons.nowait_api_pod_identity_association_id
+}
+
+# ========================================
+# KEDA / Karpenter / Monitoring
+# ========================================
+output "keda_helm_release_name" {
+  description = "KEDA Helm release name"
+  value       = module.addons.keda_helm_release_name
+}
+
+output "kube_prometheus_stack_helm_release_name" {
+  description = "kube-prometheus-stack Helm release name"
+  value       = module.addons.kube_prometheus_stack_helm_release_name
+}
+
+output "karpenter_controller_role_arn" {
+  description = "Karpenter controller IAM Role ARN"
+  value       = module.addons.karpenter_controller_role_arn
+}
+
+output "karpenter_node_role_name" {
+  description = "Karpenter node IAM Role name"
+  value       = module.addons.karpenter_node_role_name
+}
+
+output "karpenter_node_role_arn" {
+  description = "Karpenter node IAM Role ARN"
+  value       = module.addons.karpenter_node_role_arn
+}
+
+# ========================================
+# Argo CD
+# ========================================
+output "argocd_helm_release_name" {
+  description = "Argo CD Helm release name"
+  value       = module.addons.argocd_helm_release_name
+}
+
+output "argocd_namespace" {
+  description = "Argo CD namespace"
+  value       = module.addons.argocd_namespace
+}
