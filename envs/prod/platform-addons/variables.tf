@@ -112,7 +112,7 @@ variable "enable_nowait_api_pod_identity" {
 variable "nowait_api_namespace" {
   description = "Kubernetes namespace for NoWait API"
   type        = string
-  default     = "nowai-prod"
+  default     = "nowait-prod"
 }
 
 variable "nowait_api_service_account" {

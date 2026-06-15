@@ -132,31 +132,23 @@ redis_snapshot_retention_limit = 7
 # ========================================
 bastion_enabled          = true
 bastion_instance_type    = "t3.micro"
-bastion_ssh_cidr_blocks = []
+
 
 
 # ========================================
-# S3 / CloudFront
+# S3
 # ========================================
 
-# 이번 prod 1차 범위에서는 이미지 버킷만 생성
-image_bucket_enabled = true
-
-# React 정적 파일 배포용 S3 bucket은 이번 범위 제외
+# 이번 prod 1차 범위에서는 이미지 저장용 S3 버킷만 생성합니다.
+# React 정적 파일 배포용 S3 bucket과 CloudFront는 API/Worker 안정화 이후 별도 단계에서 생성합니다.
+image_bucket_enabled    = true
 frontend_bucket_enabled = false
 
-# CloudFront도 API/Worker 안정화 이후 생성
-cloudfront_enabled = false
-
-s3_image_prefix = "images/"
-
-# prod에서는 localhost 넣지 않음
-# 실제 프론트 도메인이 정해지기 전까지는 임시 prod 도메인 또는 빈 정책을 별도 검토
+# prod에서는 localhost origin을 허용하지 않습니다.
+# 실제 프론트 도메인이 확정되면 해당 origin만 허용합니다.
 cors_allowed_origins = [
   "https://nowait.example.com"
 ]
-
-alb_dns_name = null
 
 # ========================================
 # CloudWatch

@@ -234,14 +234,6 @@ variable "bastion_enabled" {
   default     = true
 }
 
-# SSH 접근 허용 CIDR입니다.
-# SSM만 사용할 예정이므로 기본값은 빈 배열입니다.
-variable "bastion_ssh_cidr_blocks" {
-  description = "Allowed SSH CIDRs. Keep empty when using SSM only."
-  type        = list(string)
-  default     = []
-}
-
 # 이미지 업로드용 S3 버킷 생성 여부입니다.
 variable "image_bucket_enabled" {
   description = "Enable S3 image bucket"

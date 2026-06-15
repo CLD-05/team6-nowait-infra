@@ -69,3 +69,21 @@ resource "aws_security_group" "bastion" {
     Name = "${var.name_prefix}-bastion-sg"
   })
 }
+# ----------------------------------------
+# EKS API Server access from Bastion
+#
+# prod private endpoint 접근을 위해 Bastion SG에서
+# EKS Cluster Security Group의 443 포트 접근을 허용합니다.
+# ----------------------------------------
+resource "aws_security_group_rule" "eks_api_from_bastion" {
+  count = var.bastion_enabled ? 1 : 0
+
+  type                     = "ingress"
+  security_group_id        = var.eks_source_security_group_id
+  source_security_group_id = aws_security_group.bastion[0].id
+
+  from_port   = 443
+  to_port     = 443
+  protocol    = "tcp"
+  description = "Allow Bastion to access EKS private API endpoint"
+}
