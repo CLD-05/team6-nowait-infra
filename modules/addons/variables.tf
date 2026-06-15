@@ -123,7 +123,6 @@ variable "enable_eso_pod_identity" {
 variable "external_secrets_secret_arns" {
   description = "Secrets Manager secret ARNs that External Secrets Operator can read"
   type        = list(string)
-  default     = []
 }
 
 # ========================================
@@ -204,6 +203,27 @@ variable "karpenter_chart_version" {
 
 variable "karpenter_values_file" {
   description = "Path to Karpenter Helm values file"
+  type        = string
+  default     = null
+}
+
+# ========================================
+# Argo CD
+# ========================================
+variable "enable_argocd" {
+  description = "Whether to install Argo CD"
+  type        = bool
+  default     = false
+}
+
+variable "argocd_chart_version" {
+  description = "Argo CD Helm chart version"
+  type        = string
+  default     = null
+}
+
+variable "argocd_values_file" {
+  description = "Path to Argo CD Helm values file"
   type        = string
   default     = null
 }

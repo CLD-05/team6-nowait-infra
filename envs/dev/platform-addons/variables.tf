@@ -128,7 +128,7 @@ variable "image_bucket_arn" {
 }
 
 # ========================================
-# KEDA / Kerpenter / Monitoring
+# KEDA / Karpenter / Monitoring
 # ========================================
 variable "enable_keda" {
   description = "Enable KEDA"
@@ -177,6 +177,26 @@ variable "kube_prometheus_stack_chart_version" {
 
 variable "kube_prometheus_stack_values_file" {
   description = "Path to kube-prometheus-stack values file"
+  type        = string
+  default     = null
+}
+
+# ========================================
+# Argo CD
+# ========================================
+variable "enable_argocd" {
+  description = "Enable Argo CD"
+  type        = bool
+  default     = true
+}
+
+variable "argocd_chart_version" {
+  description = "Argo CD Helm chart version"
+  type        = string
+}
+
+variable "argocd_values_file" {
+  description = "Path to Argo CD values file"
   type        = string
   default     = null
 }

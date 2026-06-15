@@ -126,3 +126,16 @@ output "karpenter_helm_release_name" {
   description = "Karpenter Helm release name"
   value       = var.enable_karpenter ? helm_release.karpenter[0].name : null
 }
+
+# ----------------------------------------
+# Argo CD
+# ----------------------------------------
+output "argocd_helm_release_name" {
+  description = "Argo CD Helm release name"
+  value       = var.enable_argocd ? helm_release.argocd[0].name : null
+}
+
+output "argocd_namespace" {
+  description = "Argo CD namespace"
+  value       = var.enable_argocd ? kubernetes_namespace.argocd[0].metadata[0].name : null
+}

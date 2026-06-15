@@ -20,6 +20,11 @@ module "addons" {
   metrics_server_chart_version = var.metrics_server_chart_version
   eso_chart_version            = var.eso_chart_version
 
+  # Argo CD
+  enable_argocd        = var.enable_argocd
+  argocd_chart_version = var.argocd_chart_version
+  argocd_values_file   = null
+
   # External Secrets Operator Pod Identity
   enable_eso_pod_identity     = var.enable_eso_pod_identity
   external_secrets_secret_arns = var.external_secrets_secret_arns

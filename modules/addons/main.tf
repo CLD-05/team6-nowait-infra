@@ -606,6 +606,37 @@ resource "aws_eks_pod_identity_association" "nowait_api" {
 }
 
 # -------------------------------------------------------------------
+# Argo CD
+# -------------------------------------------------------------------
+resource "kubernetes_namespace" "argocd" {
+  count = var.enable_argocd ? 1 : 0
+
+  metadata {
+    name = local.argocd_namespace
+  }
+}
+
+resource "helm_release" "argocd" {
+  count = var.enable_argocd ? 1 : 0
+
+  name       = "argocd"
+  namespace  = kubernetes_namespace.argocd[0].metadata[0].name
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+  version    = var.argocd_chart_version
+
+  values = var.argocd_values_file != null ? [
+    file(var.argocd_values_file)
+  ] : []
+
+  depends_on = [
+    kubernetes_namespace.argocd,
+    aws_eks_addon.this,
+    helm_release.metrics_server
+  ]
+}
+
+# -------------------------------------------------------------------
 # KEDA
 # -------------------------------------------------------------------
 resource "kubernetes_namespace" "keda" {

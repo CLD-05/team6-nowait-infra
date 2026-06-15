@@ -64,6 +64,10 @@ metrics_server_chart_version = "3.12.2"
 # External Secrets Operator Helm chart version
 eso_chart_version = "0.14.4"
 
+# Argo CD Helm chart version
+enable_argocd        = true
+argocd_chart_version = "9.5.9"
+
 
 # ========================================
 # External Secrets Operator / Pod Identity
@@ -77,7 +81,6 @@ enable_eso_pod_identity = true
 # terraform output secret_arns
 external_secrets_secret_arns = [
   "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/api-xxxxxx",
-  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/db-xxxxxx",
   "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/redis-xxxxxx"
 ]
 

@@ -85,7 +85,7 @@ output "nowait_api_pod_identity_association_id" {
 }
 
 # ========================================
-# KEDA / Kerpenter / Monitoring
+# KEDA / Karpenter / Monitoring
 # ========================================
 output "keda_helm_release_name" {
   description = "KEDA Helm release name"
@@ -110,4 +110,17 @@ output "karpenter_node_role_name" {
 output "karpenter_node_role_arn" {
   description = "Karpenter node IAM Role ARN"
   value       = module.addons.karpenter_node_role_arn
+}
+
+# ========================================
+# Argo CD
+# ========================================
+output "argocd_helm_release_name" {
+  description = "Argo CD Helm release name"
+  value       = module.addons.argocd_helm_release_name
+}
+
+output "argocd_namespace" {
+  description = "Argo CD namespace"
+  value       = module.addons.argocd_namespace
 }
