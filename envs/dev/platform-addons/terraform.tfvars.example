@@ -75,32 +75,38 @@ argocd_chart_version = "9.5.9"
 
 enable_eso_pod_identity = true
 
-# envs/dev/infra에서 생성된 Secrets Manager ARN 목록
 # 확인 방법:
 # cd envs/dev/infra
 # terraform output secret_arns
+# terraform output rds_master_user_secret_arn
 external_secrets_secret_arns = [
+  # module.secrets.secret_arns["api"]
   "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/api-xxxxxx",
-  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/redis-xxxxxx"
+
+  # module.secrets.secret_arns["redis"]
+  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:team6-nowait/dev/redis-xxxxxx",
+
+  # module.database.master_user_secret_arn
+  "arn:aws:secretsmanager:ap-northeast-2:194722398200:secret:rds!db-xxxxxx"
 ]
 
 # ========================================
 # KEDA
 # ========================================
 enable_keda        = true
-keda_chart_version = "<FIXED_KEDA_CHART_VERSION>"
+keda_chart_version = "2.20.0"
 
 # ========================================
 # Karpenter
 # ========================================
 enable_karpenter        = true
-karpenter_chart_version = "<FIXED_KARPENTER_CHART_VERSION>"
+karpenter_chart_version = "v1.13.0"
 
 # ========================================
 # Monitoring
 # ========================================
 enable_kube_prometheus_stack        = true
-kube_prometheus_stack_chart_version = "<FIXED_KUBE_PROMETHEUS_STACK_CHART_VERSION>"
+kube_prometheus_stack_chart_version = "85.3.3"
 
 # ========================================
 # NoWait API Pod Identity
