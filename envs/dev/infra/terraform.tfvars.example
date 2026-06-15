@@ -102,7 +102,7 @@ db_name           = "nowait"
 db_master_username = "admin"
 db_master_password = "<RDS_MASTER_PASSWORD>"
 
-db_instance_class        = "db.t4g.micro"
+db_instance_class        = "db.t4g.medium" # 부하테스트시에는 db.m7g.larg로 변경하기
 db_allocated_storage     = 20
 db_max_allocated_storage = 100
 
