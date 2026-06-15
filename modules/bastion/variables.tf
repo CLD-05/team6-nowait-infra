@@ -34,3 +34,8 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "eks_cluster_arn" {
+  description = "EKS cluster ARN that bastion can describe"
+  type        = string
+}

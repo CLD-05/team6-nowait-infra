@@ -41,6 +41,31 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# ----------------------------------------
+# EKS DescribeCluster 권한
+#
+# Bastion 내부에서 aws eks update-kubeconfig 명령을 실행하기 위해 필요합니다.
+# 실제 Kubernetes 권한은 EKS Access Entry에서 별도로 부여합니다.
+# ----------------------------------------
+resource "aws_iam_role_policy" "eks_describe" {
+  name = "${var.name_prefix}-bastion-eks-describe-policy"
+  role = aws_iam_role.this.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DescribeEksCluster"
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster"
+        ]
+        Resource = var.eks_cluster_arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "this" {
   name = "${var.name_prefix}-bastion-profile"
   role = aws_iam_role.this.name
@@ -63,6 +88,7 @@ resource "aws_instance" "this" {
   })
 
   depends_on = [
-    aws_iam_role_policy_attachment.ssm
-  ]
+    aws_iam_role_policy_attachment.ssm,
+    aws_iam_role_policy.eks_describe
+]
 }

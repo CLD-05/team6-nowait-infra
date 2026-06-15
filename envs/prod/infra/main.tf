@@ -99,7 +99,8 @@ module "bastion" {
   subnet_id         = module.network.private_app_subnet_ids[0]
   security_group_id = module.sg.bastion_security_group_id
 
-  instance_type = var.bastion_instance_type
+  instance_type   = var.bastion_instance_type
+  eks_cluster_arn = module.eks.cluster_arn
 
   common_tags = local.default_tags
 }
@@ -210,4 +211,40 @@ module "secrets" {
   }
 
   common_tags = local.default_tags
+}
+
+# ========================================
+# Bastion EKS Access Entry
+#
+# SSM으로 Bastion에 접속한 뒤 Bastion Instance Role로
+# kubectl / Helm 작업을 수행할 수 있도록 EKS Access Entry를 등록합니다.
+# ========================================
+resource "aws_eks_access_entry" "bastion" {
+  count = var.bastion_enabled ? 1 : 0
+
+  cluster_name  = module.eks.cluster_name
+  principal_arn = module.bastion[0].role_arn
+  type          = "STANDARD"
+
+  depends_on = [
+    module.eks,
+    module.bastion
+  ]
+}
+
+resource "aws_eks_access_policy_association" "bastion_cluster_admin" {
+  count = var.bastion_enabled ? 1 : 0
+
+  cluster_name  = module.eks.cluster_name
+  principal_arn = module.bastion[0].role_arn
+
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [
+    aws_eks_access_entry.bastion
+  ]
 }
