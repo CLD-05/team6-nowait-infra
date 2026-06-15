@@ -139,3 +139,11 @@ output "argocd_namespace" {
   description = "Argo CD namespace"
   value       = var.enable_argocd ? kubernetes_namespace.argocd[0].metadata[0].name : null
 }
+
+# ----------------------------------------
+# ClusterSecretStore
+# ----------------------------------------
+output "cluster_secret_store_name" {
+  description = "ClusterSecretStore name for External Secrets"
+  value       = var.enable_eso_pod_identity ? kubernetes_manifest.cluster_secret_store[0].manifest.metadata.name : null
+}
