@@ -54,11 +54,10 @@ nat_gateway_mode = "single"
 
 eks_cluster_version = "1.34"
 
-# dev는 비용 절감을 위해 노드 1개로 시작
-node_desired_size   = 1
-node_min_size       = 1
-node_max_size       = 3
-node_instance_types = ["t3.medium"]
+node_desired_size   = 2
+node_min_size       = 2
+node_max_size       = 2
+node_instance_types = ["t3.large"]
 
 # dev는 로컬 kubectl 접근을 위해 public endpoint 허용
 # 단, 반드시 팀원 공인 IP/32만 허용
