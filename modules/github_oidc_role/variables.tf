@@ -53,3 +53,9 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "github_environment" {
+  description = "GitHub Actions environment name. If set, trust policy uses environment-based OIDC subject."
+  type        = string
+  default     = null
+}

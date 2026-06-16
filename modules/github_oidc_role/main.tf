@@ -1,4 +1,31 @@
 # ========================================
+# OIDC Subject
+# ========================================
+#
+# GitHub Actions에서 environment를 사용하면 OIDC sub claim이
+# 브랜치 기준이 아니라 environment 기준으로 바뀝니다.
+#
+# 예:
+# - environment 미사용:
+#   repo:CLD-05/team6-nowait-app:ref:refs/heads/develop
+#
+# - environment 사용:
+#   repo:CLD-05/team6-nowait-app:environment:development
+#
+# 따라서 github_environment 값이 있으면 environment 기준 subject를 사용하고,
+# 없으면 기존처럼 allowed_branches 기준 subject를 사용합니다.
+# ========================================
+locals {
+  oidc_subjects = var.github_environment != null && var.github_environment != "" ? [
+    "repo:${var.github_org}/${var.github_repo}:environment:${var.github_environment}"
+  ] : [
+    for branch in var.allowed_branches :
+    "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${branch}"
+  ]
+}
+
+
+# ========================================
 # Assume Role Policy
 # ========================================
 data "aws_iam_policy_document" "assume_role" {
@@ -30,10 +57,7 @@ data "aws_iam_policy_document" "assume_role" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
 
-      values = [
-        for branch in var.allowed_branches :
-        "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${branch}"
-      ]
+      values = local.oidc_subjects
     }
   }
 }
@@ -143,6 +167,10 @@ resource "aws_iam_policy" "ecr" {
   })
 }
 
+
+# ========================================
+# Attach ECR Policy to Role
+# ========================================
 resource "aws_iam_role_policy_attachment" "ecr" {
   role       = aws_iam_role.this.name
   policy_arn = aws_iam_policy.ecr.arn
