@@ -88,3 +88,22 @@ variable "snapshot_retention_limit" {
   type        = number
   default     = 0
 }
+
+# 전송 데이터 암호화(TLS) 활성화 여부입니다.
+# true로 설정하려면 auth_token_enabled도 true여야 합니다 (AWS 제약).
+# dev: false (네트워크 격리에만 의존), prod: true 권장.
+variable "transit_encryption_enabled" {
+  description = "Enable TLS for data in transit. Required if auth_token_enabled is true."
+  type        = bool
+  default     = false
+}
+
+# AUTH 토큰(비밀번호) 활성화 여부입니다.
+# true이면 모듈이 random_password로 토큰을 생성해서 auth_token output으로 내보냅니다.
+# dev: false (네트워크 격리로만 방어), prod: true 권장 — Redis에 refresh token/
+# access token 블랙리스트가 저장되므로 네트워크 격리만으로는 방어선이 한 겹뿐입니다.
+variable "auth_token_enabled" {
+  description = "Enable Redis AUTH token. Requires transit_encryption_enabled = true."
+  type        = bool
+  default     = false
+}

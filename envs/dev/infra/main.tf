@@ -157,6 +157,11 @@ module "elasticache" {
   automatic_failover_enabled = var.redis_automatic_failover
   snapshot_retention_limit   = var.redis_snapshot_retention_limit
 
+  # dev는 비용/편의를 위해 네트워크 격리(보안그룹)에만 의존한다 (모듈 기본값과 동일,
+  # prod와의 차이를 명확히 하기 위해 명시적으로 적어둔다).
+  transit_encryption_enabled = false
+  auth_token_enabled         = false
+
   common_tags = local.default_tags
 }
 

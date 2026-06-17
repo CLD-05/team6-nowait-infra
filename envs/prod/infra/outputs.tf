@@ -155,6 +155,14 @@ output "redis_port" {
   value       = module.elasticache.port
 }
 
+# terraform output -raw redis_auth_token 으로 값을 꺼내서
+# team6-nowait/prod/redis 시크릿에 REDIS_PASSWORD 키로 직접 넣어야 한다.
+output "redis_auth_token" {
+  description = "Redis AUTH token - put into team6-nowait/prod/redis as REDIS_PASSWORD"
+  value       = module.elasticache.auth_token
+  sensitive   = true
+}
+
 # ----------------------------------------
 # Secrets Manager
 # ----------------------------------------

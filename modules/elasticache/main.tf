@@ -14,6 +14,23 @@ resource "aws_elasticache_subnet_group" "this" {
 }
 
 # ----------------------------------------
+# Redis AUTH 토큰
+# ----------------------------------------
+#
+# auth_token_enabled = true인 환경(prod)에서만 생성됩니다.
+# ElastiCache auth_token 제약: 16~128자, '/', '"', '@', ' ' 금지.
+# 생성된 값은 outputs.tf의 auth_token으로 내보내져서, 운영자가
+# team6-nowait/{env}/redis Secrets Manager 시크릿에 직접 넣어줘야 합니다
+# (이 저장소는 시크릿 값을 Terraform에 보관하지 않는다는 기존 방침과 동일하게,
+# 여기서도 Secrets Manager에 자동으로 쓰지 않고 출력만 합니다).
+resource "random_password" "auth_token" {
+  count            = var.auth_token_enabled ? 1 : 0
+  length           = 32
+  special          = true
+  override_special = "!#$%^&*()-_=+[]{}<>:?"
+}
+
+# ----------------------------------------
 # ElastiCache Replication Group (Redis)
 # ----------------------------------------
 #
@@ -50,7 +67,10 @@ resource "aws_elasticache_replication_group" "this" {
 
   # 전송 데이터 암호화입니다.
   # true로 설정 시 애플리케이션에서 TLS 연결이 필요합니다.
-  transit_encryption_enabled = false
+  transit_encryption_enabled = var.transit_encryption_enabled
+
+  # AUTH 토큰 — transit_encryption_enabled = true일 때만 설정 가능 (AWS 제약).
+  auth_token = var.auth_token_enabled ? random_password.auth_token[0].result : null
 
   maintenance_window       = var.maintenance_window
   snapshot_retention_limit = var.snapshot_retention_limit

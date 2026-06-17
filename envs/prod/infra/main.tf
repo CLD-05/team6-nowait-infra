@@ -162,6 +162,11 @@ module "elasticache" {
   automatic_failover_enabled = var.redis_automatic_failover
   snapshot_retention_limit   = var.redis_snapshot_retention_limit
 
+  # prod는 네트워크 격리(보안그룹)만으로 방어선을 두지 않고 TLS + AUTH 토큰까지 켠다.
+  # Redis에 refresh token / access token 블랙리스트가 저장되기 때문.
+  transit_encryption_enabled = true
+  auth_token_enabled         = true
+
   common_tags = local.default_tags
 }
 

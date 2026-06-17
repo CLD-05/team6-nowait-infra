@@ -18,3 +18,12 @@ output "port" {
   description = "Redis port"
   value       = 6379
 }
+
+# Redis AUTH 토큰입니다. auth_token_enabled = true일 때만 값이 있습니다.
+# team6-nowait/{env}/redis Secrets Manager 시크릿에 REDIS_PASSWORD 키로
+# 직접 넣어줘야 앱이 사용합니다 (이 모듈은 Secrets Manager에 직접 쓰지 않습니다).
+output "auth_token" {
+  description = "Redis AUTH token (null if auth_token_enabled = false)"
+  value       = var.auth_token_enabled ? random_password.auth_token[0].result : null
+  sensitive   = true
+}
