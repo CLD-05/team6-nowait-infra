@@ -8,3 +8,13 @@ provider "aws" {
     tags = local.default_tags
   }
 }
+
+# CloudFront에 붙일 ACM 인증서는 반드시 us-east-1에서 발급해야 하므로 alias 추가.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = local.default_tags
+  }
+}
