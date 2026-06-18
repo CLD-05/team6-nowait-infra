@@ -23,4 +23,44 @@ grafana:
       memory: 512Mi
 
 alertmanager:
-  enabled: false
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    # Slack webhook URL은 git에 평문으로 넣지 않는다.
+    # 아래 이름의 Secret을 미리 만들어두면 /etc/alertmanager/secrets/<name>/url로 마운트된다.
+    #   kubectl create secret generic alertmanager-slack-webhook -n monitoring --from-literal=url=<webhook-url>
+    secrets:
+      - alertmanager-slack-webhook
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "null"
+      group_by: ["alertname", "severity"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - receiver: slack-notifications
+          matchers:
+            - severity =~ "warning|critical"
+    receivers:
+      - name: "null"
+      - name: slack-notifications
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
+            channel: "#nowait-alerts"
+            send_resolved: true
+            title: "{{ .CommonAnnotations.summary }}"
+            text: "{{ .CommonAnnotations.description }}"
+    inhibit_rules:
+      - source_matchers: ["severity = critical"]
+        target_matchers: ["severity = warning"]
+        equal: ["alertname", "namespace"]

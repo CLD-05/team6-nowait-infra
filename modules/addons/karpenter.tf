@@ -258,3 +258,109 @@ resource "helm_release" "karpenter" {
   ]
 }
 
+# -------------------------------------------------------------------
+# Karpenter EC2NodeClass (default)
+#
+# subnet/SG는 모듈.network가 enable_karpenter_discovery_tags=true일 때 붙이는
+# "karpenter.sh/discovery=<cluster_name>" 태그로 자동 탐색한다(이미 적용돼 있음).
+# -------------------------------------------------------------------
+resource "kubernetes_manifest" "karpenter_ec2nodeclass_default" {
+  count = var.enable_karpenter ? 1 : 0
+
+  manifest = {
+    apiVersion = "karpenter.k8s.aws/v1"
+    kind       = "EC2NodeClass"
+    metadata = {
+      name = "default"
+    }
+    spec = {
+      amiSelectorTerms = [
+        { alias = "al2023@latest" }
+      ]
+      role = aws_iam_role.karpenter_node[0].name
+      subnetSelectorTerms = [
+        {
+          tags = {
+            "karpenter.sh/discovery" = var.cluster_name
+          }
+        }
+      ]
+      securityGroupSelectorTerms = [
+        {
+          tags = {
+            "karpenter.sh/discovery" = var.cluster_name
+          }
+        }
+      ]
+      tags = {
+        Team                     = var.team
+        "karpenter.sh/discovery" = var.cluster_name
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.karpenter
+  ]
+}
+
+# -------------------------------------------------------------------
+# Karpenter NodePool (default)
+#
+# 부하테스트 기간 동안 prod 근접 사양(m6i.large)으로도 노드를 띄울 수 있도록
+# t3.large/m6i.large만 허용한다. spot은 제외(on-demand만) — 테스트 중 변동성을
+#배제하기 위함. 트래픽이 빠지면 consolidation으로 자동 회수한다.
+# -------------------------------------------------------------------
+resource "kubernetes_manifest" "karpenter_nodepool_default" {
+  count = var.enable_karpenter ? 1 : 0
+
+  manifest = {
+    apiVersion = "karpenter.sh/v1"
+    kind       = "NodePool"
+    metadata = {
+      name = "default"
+    }
+    spec = {
+      template = {
+        spec = {
+          requirements = [
+            {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["t3.large", "m6i.large"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["on-demand"]
+            },
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["amd64"]
+            }
+          ]
+          nodeClassRef = {
+            group = "karpenter.k8s.aws"
+            kind  = "EC2NodeClass"
+            name  = "default"
+          }
+        }
+      }
+      limits = {
+        cpu    = "16"
+        memory = "64Gi"
+      }
+      disruption = {
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
+        consolidateAfter    = "5m"
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.karpenter_ec2nodeclass_default,
+    helm_release.karpenter
+  ]
+}
+
