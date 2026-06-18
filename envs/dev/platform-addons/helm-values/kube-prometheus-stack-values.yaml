@@ -38,6 +38,7 @@ grafana:
   # AWS 자격증명(modules/addons/monitoring-cloudwatch.tf)을 그대로 사용한다.
   additionalDataSources:
     - name: CloudWatch
+      uid: cloudwatch
       type: cloudwatch
       jsonData:
         authType: default
