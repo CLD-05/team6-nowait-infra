@@ -7,151 +7,82 @@ environment = "prod"
 name_prefix = "team6-nowait-prod"
 region      = "ap-northeast-2"
 
-# IAM Role 생성 시 필수 permissions boundary
+# IAM Role 생성 시 필수 permissions boundary (본인 AWS 계정 ID로 변경 필요)
 iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
 
 
 # ========================================
 # Network
 # ========================================
-
-# Prod VPC CIDR
-vpc_cidr = "10.6.128.0/17"
-
-# 사용할 AZ 개수
-az_count = 2
-
-# VPC DNS 설정
-# EKS, RDS, ElastiCache endpoint 사용을 위해 true 권장
-enable_dns_hostnames = true
-enable_dns_support   = true
-
-# Public Subnet: ALB, NAT Gateway 위치
-public_subnet_cidrs = [
-  "10.6.128.0/24",
-  "10.6.129.0/24"
-]
-
-# Private App Subnet: EKS Node, API Pod, Worker Pod 위치
-private_app_subnet_cidrs = [
-  "10.6.144.0/20",
-  "10.6.160.0/20"
-]
-
-# Private DB Subnet: RDS, Redis 위치
-private_db_subnet_cidrs = [
-  "10.6.192.0/24",
-  "10.6.193.0/24"
-]
-
-# Prod는 운영 안정성을 위해 per_az 권장
-# 비용이 부담되면 초기에는 single로 시작 가능
-nat_gateway_mode = "per_az"
+vpc_cidr                 = "10.6.128.0/17"
+az_count                 = 2
+enable_dns_hostnames     = true
+enable_dns_support       = true
+public_subnet_cidrs      = ["10.6.128.0/24", "10.6.129.0/24"]
+private_app_subnet_cidrs = ["10.6.144.0/20", "10.6.160.0/20"]
+private_db_subnet_cidrs  = ["10.6.192.0/24", "10.6.193.0/24"]
+nat_gateway_mode         = "per_az"
 
 
 # ========================================
 # EKS
 # ========================================
-
-eks_cluster_version = "1.34"
-
-# Prod는 최소 3개 노드로 시작
-node_desired_size   = 3
-node_min_size       = 2
-node_max_size       = 6
-node_instance_types = ["m6i.large"]
-
-# Prod는 private endpoint 중심 운영 권장
-# kubectl 접근은 Bastion/SSM 또는 VPN을 통해 수행
+eks_cluster_version         = "1.34"
+node_desired_size           = 3
+node_min_size               = 2
+node_max_size               = 6
+node_instance_types         = ["m6i.large"]
 eks_endpoint_public_access  = false
 eks_endpoint_private_access = true
 eks_public_access_cidrs     = []
+enabled_cluster_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-# EKS 감사/추적 로그
-enabled_cluster_log_types = [
-  "api",
-  "audit",
-  "authenticator",
-  "controllerManager",
-  "scheduler"
-]
-
-# EKS Access Entry
+# EKS Access Entry 권한을 부여할 팀원들의 IAM User ARN 목록
 admin_principal_arns = [
-  "arn:aws:iam::194722398200:user/<ADMIN_USER>"
+  "arn:aws:iam::194722398200:user/team6-YOUR-NAME-HERE",
+  "arn:aws:iam::194722398200:user/team6-MEMBER-NAME-HERE"
 ]
-
-developer_principal_arns = [
-  "arn:aws:iam::194722398200:user/<DEVELOPER_USER>"
-]
-
-viewer_principal_arns = [
-  "arn:aws:iam::194722398200:user/<VIEWER_USER>"
-]
-
+developer_principal_arns = []
+viewer_principal_arns    = []
 
 
 # ========================================
-# RDS
+# RDS & Redis & Bastion
 # ========================================
-db_engine_version = "8.0"
-db_name           = "nowait"
-
-db_master_username = "admin"
-
-db_instance_class        = "db.m7g.large" #트래픽 증가시 db.m7g.xlarge로 변경하기
-db_allocated_storage     = 20
-db_max_allocated_storage = 200
-
-db_multi_az = true
-
-db_backup_retention = 7
-
-db_deletion_protection = true
-db_skip_final_snapshot = false
-
+db_engine_version            = "8.0"
+db_name                      = "nowait"
+db_master_username           = "admin"
+db_instance_class            = "db.m7g.large"
+db_allocated_storage         = 20
+db_max_allocated_storage     = 200
+db_multi_az                  = true
+db_backup_retention          = 7
+db_deletion_protection       = true
+db_skip_final_snapshot       = false
 db_final_snapshot_identifier = "team6-nowait-prod-rds-final-snapshot"
+db_apply_immediately         = false
 
-db_apply_immediately = false
-
-
-# ========================================
-# ElastiCache Redis
-# ========================================
-
-# Prod Redis: Replication Group + Multi-AZ + Automatic Failover
-redis_node_type                = "cache.r7g.large" # 트래픽 증가시 cache.r7g.xlarge (지표보고 증설)
+redis_node_type                = "cache.r7g.large"
 redis_replica_count            = 1
 redis_multi_az_enabled         = true
 redis_automatic_failover       = true
 redis_snapshot_retention_limit = 7
 
-
-# ========================================
-# Bastion
-# ========================================
-bastion_enabled          = true
-bastion_instance_type    = "t3.micro"
-
+bastion_enabled       = true
+bastion_instance_type = "t3.micro"
 
 
 # ========================================
-# S3
+# S3 & CloudWatch
 # ========================================
-
-# 이번 prod 1차 범위에서는 이미지 저장용 S3 버킷만 생성합니다.
-# React 정적 파일 배포용 S3 bucket과 CloudFront는 API/Worker 안정화 이후 별도 단계에서 생성합니다.
 image_bucket_enabled    = true
 frontend_bucket_enabled = false
+cors_allowed_origins    = ["https://YOUR_DOMAIN_HERE"] # 실제 도메인 주소로 변경
+log_retention_days      = 30
 
-# prod에서는 localhost origin을 허용하지 않습니다.
-# 실제 프론트 도메인이 확정되면 해당 origin만 허용합니다.
-cors_allowed_origins = [
-  "https://nowait.example.com"
-]
 
 # ========================================
-# CloudWatch
+# Domain & Load Balancer (Route53 / ACM / ALB)
 # ========================================
-
-log_retention_days = 30
+root_domain   = "YOUR_DOMAIN_HERE" # 예: nowait.singleuser.cloud
+api_subdomain = "api"
