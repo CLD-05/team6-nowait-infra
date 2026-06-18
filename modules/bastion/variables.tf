@@ -1,17 +1,36 @@
-variable "project" {
-  type = string
+variable "name_prefix" {
+  description = "Common resource name prefix"
+  type        = string
 }
 
-variable "vpc_id" {
-  type = string
+variable "iam_role_permissions_boundary" {
+  description = "Required permissions boundary for IAM roles"
+  type        = string
 }
 
 variable "subnet_id" {
-  description = "Bastion을 배치할 public 서브넷 ID"
+  description = "Subnet ID for bastion instance"
+  type        = string
+}
+
+variable "security_group_id" {
+  description = "Bastion security group ID"
   type        = string
 }
 
 variable "instance_type" {
-  type    = string
-  default = "t3.micro"
+  description = "Bastion instance type"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "common_tags" {
+  description = "Common tags"
+  type        = map(string)
+  default     = {}
+}
+
+variable "eks_cluster_arn" {
+  description = "EKS cluster ARN that bastion can describe"
+  type        = string
 }

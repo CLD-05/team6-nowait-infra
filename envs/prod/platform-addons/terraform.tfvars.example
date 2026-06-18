@@ -1,0 +1,100 @@
+# ========================================
+# Common
+# ========================================
+team        = "team6"
+project     = "nowait"
+environment = "prod"
+name_prefix = "team6-nowait-prod"
+region      = "ap-northeast-2"
+
+# IAM Role 생성 시 필수 permissions boundary
+iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
+
+# ========================================
+# Target EKS Cluster
+# ========================================
+
+# Add-ons를 설치할 prod EKS Cluster 이름
+cluster_name = "team6-nowait-prod-eks"
+
+
+# ========================================
+# EKS Add-ons
+# ========================================
+
+# EKS 기본 Add-on 목록
+eks_addons = [
+  "vpc-cni",
+  "coredns",
+  "kube-proxy",
+  "eks-pod-identity-agent",
+  "aws-ebs-csi-driver"
+]
+
+# Add-on 버전 고정이 필요하면 여기에 명시
+# 비워두면 AWS/EKS가 클러스터 버전에 맞는 기본 호환 버전을 선택
+addon_versions = {}
+
+# EBS CSI Driver에 Pod Identity Role 연결
+enable_ebs_csi_pod_identity = true
+
+# ========================================
+# AWS Load Balancer Controller
+# ========================================
+vpc_id = "<PROD_VPC_ID>"
+
+lbc_chart_version = "1.13.0"
+
+# ========================================
+# metrics-server
+# ========================================
+metrics_server_chart_version = "3.12.2"
+
+# ========================================
+# External Secrets Operator
+# ========================================
+eso_chart_version = "0.14.4"
+
+enable_eso_pod_identity = true
+
+external_secrets_secret_arns = [
+  "<PROD_API_SECRET_ARN>",
+  "<PROD_REDIS_SECRET_ARN>",
+  "<PROD_RDS_MANAGED_SECRET_ARN>"
+]
+
+# ========================================
+# Argo CD
+# ========================================
+enable_argocd        = true
+argocd_chart_version = "9.5.9"
+argocd_values_file   = null
+
+# ========================================
+# KEDA
+# ========================================
+enable_keda        = true
+keda_chart_version = "2.20.0"
+
+# ========================================
+# Karpenter
+# ========================================
+enable_karpenter        = true
+karpenter_chart_version = "1.13.0"
+
+# ========================================
+# Monitoring
+# ========================================
+enable_kube_prometheus_stack        = true
+kube_prometheus_stack_chart_version = "85.3.3"
+
+# ========================================
+# NoWait API Pod Identity
+# ========================================
+enable_nowait_api_pod_identity = true
+
+nowait_api_namespace       = "nowait-prod"
+nowait_api_service_account = "nowait-api"
+
+image_bucket_arn = "<PROD_IMAGE_BUCKET_ARN>"

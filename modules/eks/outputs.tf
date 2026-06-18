@@ -1,17 +1,46 @@
 output "cluster_name" {
-  value = aws_eks_cluster.this.name
+  description = "EKS Cluster name"
+  value       = aws_eks_cluster.this.name
+}
+
+output "cluster_arn" {
+  description = "EKS Cluster ARN"
+  value       = aws_eks_cluster.this.arn
 }
 
 output "cluster_endpoint" {
-  value = aws_eks_cluster.this.endpoint
+  description = "EKS API Server endpoint"
+  value       = aws_eks_cluster.this.endpoint
 }
 
-output "cluster_certificate_authority" {
-  value = aws_eks_cluster.this.certificate_authority[0].data
+output "cluster_certificate_authority_data" {
+  description = "EKS Cluster CA data"
+  value       = aws_eks_cluster.this.certificate_authority[0].data
 }
 
 output "cluster_security_group_id" {
-  value = aws_security_group.cluster.id
+  description = "EKS Cluster Security Group ID"
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
+
+output "node_security_group_id" {
+  description = "Security Group ID used for EKS node communication"
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
+
+output "node_group_name" {
+  description = "EKS Managed Node Group name"
+  value       = aws_eks_node_group.main.node_group_name
+}
+
+output "cluster_role_arn" {
+  description = "EKS Cluster IAM Role ARN"
+  value       = aws_iam_role.cluster.arn
+}
+
+output "node_role_arn" {
+  description = "EKS Node IAM Role ARN"
+  value       = aws_iam_role.node.arn
 }
 
 output "oidc_provider_arn" {
@@ -20,9 +49,6 @@ output "oidc_provider_arn" {
 }
 
 output "oidc_provider_url" {
-  value = aws_iam_openid_connect_provider.cluster.url
-}
-
-output "node_role_arn" {
-  value = aws_iam_role.node.arn
+  description = "EKS OIDC issuer URL"
+  value       = aws_iam_openid_connect_provider.cluster.url
 }

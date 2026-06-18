@@ -1,0 +1,115 @@
+{
+  "uid": "nowait-overview",
+  "title": "NoWait Overview (dev)",
+  "tags": ["nowait"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU 사용률 (limit 대비 %)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"nowait-dev\", container=~\"nowait-api|nowait-worker\"}[5m])) by (pod) / sum(kube_pod_container_resource_limits{namespace=\"nowait-dev\", resource=\"cpu\", container=~\"nowait-api|nowait-worker\"}) by (pod) * 100",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "메모리 사용률 (limit 대비 %)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"nowait-dev\", container=~\"nowait-api|nowait-worker\"}) by (pod) / sum(kube_pod_container_resource_limits{namespace=\"nowait-dev\", resource=\"memory\", container=~\"nowait-api|nowait-worker\"}) by (pod) * 100",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Redis Pending 큐 깊이",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(waiting_queue_pending)",
+          "legendFormat": "waiting pending"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(reservation_queue_pending)",
+          "legendFormat": "reservation pending"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "KEDA 현재 Replica 수",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"nowait-dev\", horizontalpodautoscaler=~\"keda-hpa-nowait-api|keda-hpa-nowait-worker\"}",
+          "legendFormat": "{{horizontalpodautoscaler}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "HTTP 요청 처리량 (RPS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"nowait-dev\"}[1m])) by (uri)",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "HTTP p95 레이턴시",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{namespace=\"nowait-dev\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "현재 Firing 알림 수 (nowait-dev)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "count(ALERTS{alertstate=\"firing\", namespace=\"nowait-dev\"}) OR vector(0)",
+          "legendFormat": "firing"
+        }
+      ]
+    }
+  ]
+}
