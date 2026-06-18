@@ -33,6 +33,15 @@ grafana:
     hosts: []
     path: /
     pathType: Prefix
+  # RDS/ElastiCache는 AWS 관리형 서비스라 Prometheus가 못 스크랩하고
+  # CloudWatch 메트릭으로만 존재한다. authType: default는 Pod Identity로 주입된
+  # AWS 자격증명(modules/addons/monitoring-cloudwatch.tf)을 그대로 사용한다.
+  additionalDataSources:
+    - name: CloudWatch
+      type: cloudwatch
+      jsonData:
+        authType: default
+        defaultRegion: ap-northeast-2
 
 alertmanager:
   enabled: true
