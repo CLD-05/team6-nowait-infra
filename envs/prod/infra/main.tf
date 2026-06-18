@@ -186,7 +186,8 @@ module "s3" {
   # [순환 참조 방지] 생성된 CloudFront의 ARN을 주입하여 버킷 정책이 허용하도록 함.
   cloudfront_distribution_arn = module.cloudfront.distribution_arn
 
-  common_tags = local.default_tags
+  common_tags        = local.default_tags
+  cloudfront_enabled = true
 }
 
 # ========================================
