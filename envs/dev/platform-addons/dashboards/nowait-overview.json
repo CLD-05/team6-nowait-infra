@@ -4,7 +4,7 @@
   "tags": ["nowait"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "time": { "from": "now-30m", "to": "now" },
   "panels": [
@@ -125,7 +125,11 @@
           "statistic": "Average",
           "dimensions": { "DBInstanceIdentifier": "team6-nowait-dev-rds" },
           "region": "ap-northeast-2",
-          "refId": "A"
+          "refId": "A",
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "matchExact": true
         }
       ]
     },
@@ -143,7 +147,11 @@
           "statistic": "Average",
           "dimensions": { "DBInstanceIdentifier": "team6-nowait-dev-rds" },
           "region": "ap-northeast-2",
-          "refId": "A"
+          "refId": "A",
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "matchExact": true
         }
       ]
     },
@@ -161,7 +169,11 @@
           "statistic": "Average",
           "dimensions": { "CacheClusterId": "team6-nowait-dev-redis-001" },
           "region": "ap-northeast-2",
-          "refId": "A"
+          "refId": "A",
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "matchExact": true
         }
       ]
     },
@@ -179,7 +191,11 @@
           "statistic": "Average",
           "dimensions": { "CacheClusterId": "team6-nowait-dev-redis-001" },
           "region": "ap-northeast-2",
-          "refId": "A"
+          "refId": "A",
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "matchExact": true
         }
       ]
     },
