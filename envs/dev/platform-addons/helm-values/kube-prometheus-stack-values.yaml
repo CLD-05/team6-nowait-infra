@@ -21,6 +21,18 @@ grafana:
     limits:
       cpu: 500m
       memory: 512Mi
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-path: /api/health
+      alb.ingress.kubernetes.io/healthcheck-port: "3000"
+    hosts: []
+    path: /
+    pathType: Prefix
 
 alertmanager:
   enabled: true
