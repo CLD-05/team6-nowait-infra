@@ -172,8 +172,7 @@ module "elasticache" {
 
 # ========================================
 # S3
-# Image Bucket only
-# Frontend / CloudFront는 이번 범위 제외
+# Image Bucket & Frontend Bucket
 # ========================================
 module "s3" {
   source = "../../../modules/s3"
@@ -185,10 +184,26 @@ module "s3" {
 
   cors_allowed_origins = var.cors_allowed_origins
 
-  # CloudFront는 이번 범위 제외
-  cloudfront_distribution_arn = null
+  # [순환 참조 방지] 생성된 CloudFront의 ARN을 주입하여 버킷 정책이 허용하도록 함.
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
 
   common_tags = local.default_tags
+}
+
+# ========================================
+# CloudFront
+# Frontend Production Distribution
+# ========================================
+module "cloudfront" {
+  source = "../../../modules/cloudfront"
+
+  name_prefix        = var.name_prefix
+  common_tags        = local.default_tags
+  cloudfront_enabled = var.cloudfront_enabled # prod 환경에서는 true로 주입.
+  price_class        = var.price_class
+
+  # S3 모듈에서 생성된 프론트엔드 버킷의 도메인 주소를 가져와 오리진으로 설정.
+  frontend_bucket_domain_name = module.s3.frontend_bucket_domain_name
 }
 
 # ========================================

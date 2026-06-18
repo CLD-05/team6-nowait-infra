@@ -1,7 +1,7 @@
 # modules/cloudfront
 
 ## 개요
-NoWait 프로젝트의 CloudFront Distribution 모듈입니다.
+NoWait 프로젝트의 CloudFront Distribution 모듈입니다.(서브도메인 방식 채택)
 
 ## 생성 리소스
 
@@ -10,8 +10,7 @@ NoWait 프로젝트의 CloudFront Distribution 모듈입니다.
 - 기존 OAI 방식보다 보안이 강화된 OAC 방식 사용
 
 ### CloudFront Distribution
-- Origin 1: S3 Frontend Bucket (React 정적 파일)
-- Origin 2: ALB (/api/* 요청 포워딩)
+- Origin: S3 Frontend Bucket (React 정적 파일)
 - React SPA 라우팅: 403/404 → index.html 리다이렉트
 - HTTPS 강제 리다이렉트
 
@@ -19,7 +18,6 @@ NoWait 프로젝트의 CloudFront Distribution 모듈입니다.
 | 경로 | TTL | 설명 |
 |------|-----|------|
 | /* (default) | 1일 | React 정적 파일 |
-| /api/* | 0 | API 요청 캐시 없음 |
 
 ## 환경별 설정
 | 변수 | dev | prod |

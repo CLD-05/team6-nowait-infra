@@ -40,11 +40,3 @@ variable "frontend_bucket_domain_name" {
   type        = string
   default     = null
 }
-
-# ALB DNS name
-# modules/eks 또는 ingress에서 생성된 ALB DNS를 넘겨받습니다.
-variable "alb_dns_name" {
-  description = "ALB DNS name for API requests"
-  type        = string
-  default     = null
-}
