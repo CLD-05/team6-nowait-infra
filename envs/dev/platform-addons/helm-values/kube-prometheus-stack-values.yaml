@@ -55,6 +55,16 @@ alertmanager:
       limits:
         cpu: 200m
         memory: 256Mi
+    # PVC 없이는 파드가 재시작될 때마다(노드 교체, 롤아웃 등) silence/알림 상태가
+    # 전부 날아간다 — 실제로 두 번 겪었다. 작은 EBS 볼륨으로 영구화한다.
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
     # Slack webhook URL은 git에 평문으로 넣지 않는다.
     # 아래 이름의 Secret을 미리 만들어두면 /etc/alertmanager/secrets/<name>/url로 마운트된다.
     #   kubectl create secret generic alertmanager-slack-webhook -n monitoring --from-literal=url=<webhook-url>
