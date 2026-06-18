@@ -198,3 +198,36 @@ output "image_bucket_domain_name" {
   description = "Image S3 bucket regional domain name"
   value       = module.s3.image_bucket_domain_name
 }
+# ========================================
+# Route53 / ACM (트랙 1)
+# ========================================
+
+# 강성천님께 전달 → 가비아 singleuser.cloud 영역에 nowait NS 레코드 등록
+output "route53_name_servers" {
+  description = "NS records to register at parent zone (singleuser.cloud at Gabia)"
+  value       = module.route53.name_servers
+}
+
+# 트랙 4(CloudFront alias A 레코드 추가용)
+output "route53_zone_id" {
+  description = "Route53 hosted zone ID for nowait.singleuser.cloud"
+  value       = module.route53.zone_id
+}
+
+# ALB가 Ingress annotation에서 참조할 인증서 ARN
+output "acm_seoul_certificate_arn" {
+  description = "ACM wildcard certificate ARN in ap-northeast-2 (for ALB)"
+  value       = module.acm.seoul_certificate_arn
+}
+
+# 트랙 4(CloudFront 바인딩)에 전달
+output "acm_virginia_certificate_arn" {
+  description = "ACM wildcard certificate ARN in us-east-1 (for CloudFront)"
+  value       = module.acm.virginia_certificate_arn
+}
+
+# 트랙 3 (CORS allowed origin / Ingress host) 등 참고용
+output "api_url" {
+  description = "Backend API URL"
+  value       = "https://${var.api_subdomain}.${var.root_domain}"
+}
