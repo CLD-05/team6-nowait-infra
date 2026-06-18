@@ -95,7 +95,6 @@ module "bastion" {
   name_prefix                   = var.name_prefix
   iam_role_permissions_boundary = var.iam_role_permissions_boundary
 
-  vpc_id            = module.network.vpc_id
   subnet_id         = module.network.private_app_subnet_ids[0]
   security_group_id = module.sg.bastion_security_group_id
 
@@ -268,3 +267,52 @@ resource "aws_eks_access_policy_association" "bastion_cluster_admin" {
     aws_eks_access_entry.bastion
   ]
 }
+
+# ========================================
+# Route53 Hosted Zone
+# nowait.singleuser.cloud (singleuser.cloud 부모 영역에서 NS 위임)
+# ========================================
+module "route53" {
+  source = "../../../modules/route53"
+
+  root_domain = var.root_domain
+}
+
+# ========================================
+# ACM Wildcard Certificate
+# nowait.singleuser.cloud + *.nowait.singleuser.cloud
+# 서울(ALB용) + us-east-1(CloudFront용) 두 리전 발급
+# ========================================
+module "acm" {
+  source = "../../../modules/acm"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  root_domain     = var.root_domain
+  route53_zone_id = module.route53.zone_id
+}
+
+# ========================================
+# API A Record (alias)
+# api.nowait.singleuser.cloud → ALB
+#
+# ALB는 AWS Load Balancer Controller가 Ingress로부터 동적 생성하므로,
+# ALB DNS는 platform-addons 적용 후 별도로 채워야 함.
+# 일단 placeholder로 빈 alias 등록은 불가하므로, ALB 생성 후에 manual 또는
+# 후속 PR로 활성화 예정.
+# ========================================
+# resource "aws_route53_record" "api" {
+#   zone_id = module.route53.zone_id
+#   name    = "${var.api_subdomain}.${var.root_domain}"
+#   type    = "A"
+#
+#   alias {
+#     name                   = "<TODO: ALB DNS from Load Balancer Controller>"
+#     zone_id                = "<TODO: ALB hosted zone>"
+#     evaluate_target_health = true
+#   }
+# }
+

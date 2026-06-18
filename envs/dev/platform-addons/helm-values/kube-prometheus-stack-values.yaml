@@ -21,6 +21,78 @@ grafana:
     limits:
       cpu: 500m
       memory: 512Mi
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-path: /api/health
+      alb.ingress.kubernetes.io/healthcheck-port: "3000"
+    hosts: []
+    path: /
+    pathType: Prefix
+  # RDS/ElastiCache는 AWS 관리형 서비스라 Prometheus가 못 스크랩하고
+  # CloudWatch 메트릭으로만 존재한다. authType: default는 Pod Identity로 주입된
+  # AWS 자격증명(modules/addons/monitoring-cloudwatch.tf)을 그대로 사용한다.
+  additionalDataSources:
+    - name: CloudWatch
+      uid: cloudwatch
+      type: cloudwatch
+      jsonData:
+        authType: default
+        defaultRegion: ap-northeast-2
 
 alertmanager:
-  enabled: false
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    # PVC 없이는 파드가 재시작될 때마다(노드 교체, 롤아웃 등) silence/알림 상태가
+    # 전부 날아간다 — 실제로 두 번 겪었다. 작은 EBS 볼륨으로 영구화한다.
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+    # Slack webhook URL은 git에 평문으로 넣지 않는다.
+    # 아래 이름의 Secret을 미리 만들어두면 /etc/alertmanager/secrets/<name>/url로 마운트된다.
+    #   kubectl create secret generic alertmanager-slack-webhook -n monitoring --from-literal=url=<webhook-url>
+    secrets:
+      - alertmanager-slack-webhook
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "null"
+      group_by: ["alertname", "severity"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - receiver: slack-notifications
+          matchers:
+            - severity =~ "warning|critical"
+    receivers:
+      - name: "null"
+      - name: slack-notifications
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
+            channel: "#nowait-alerts"
+            send_resolved: true
+            title: "{{ .CommonAnnotations.summary }}"
+            text: "{{ .CommonAnnotations.description }}"
+    inhibit_rules:
+      - source_matchers: ["severity = critical"]
+        target_matchers: ["severity = warning"]
+        equal: ["alertname", "namespace"]

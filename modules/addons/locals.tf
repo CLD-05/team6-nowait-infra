@@ -31,11 +31,11 @@ locals {
   argocd_namespace = "argocd"
 
   keda_namespace = "keda"
-  
+
   monitoring_namespace = "monitoring"
 
   karpenter_namespace       = "karpenter"
   karpenter_service_account = "karpenter"
 
-  
+
 }

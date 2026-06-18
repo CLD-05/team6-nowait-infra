@@ -16,9 +16,8 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 # ========================================
 # CloudFront Distribution
 #
-# 구조:
+# 구조: 서브도메인
 # 사용자 → CloudFront → S3 Frontend Bucket (정적 파일)
-#                    → ALB (API 요청 /api/*)
 # ========================================
 resource "aws_cloudfront_distribution" "this" {
   count = var.cloudfront_enabled ? 1 : 0
@@ -26,6 +25,8 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   default_root_object = "index.html"
   price_class         = var.price_class
+
+  aliases = ["nowait.singleuser.cloud"]
 
   # ----------------------------------------
   # Origin: S3 Frontend Bucket 단독 연결
@@ -85,10 +86,30 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn            = var.acm_virginia_certificate_arn
+    ssl_support_method             = var.acm_virginia_certificate_arn != null ? "sni-only" : null
+    minimum_protocol_version       = var.acm_virginia_certificate_arn != null ? "TLSv1.2_2021" : null
+    cloudfront_default_certificate = var.acm_virginia_certificate_arn == null ? true : false
   }
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-cf"
   })
+}
+
+# ========================================
+# Route53 DNS A 레코드 추가 (도메인 자동 연결)
+# ========================================
+resource "aws_route53_record" "frontend" {
+  count = var.cloudfront_enabled && var.route53_zone_id != null && var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = "nowait.singleuser.cloud"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this[0].domain_name
+    zone_id                = aws_cloudfront_distribution.this[0].hosted_zone_id
+    evaluate_target_health = false
+  }
 }

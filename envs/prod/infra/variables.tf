@@ -372,7 +372,23 @@ variable "s3_image_prefix" {
 variable "price_class" {
   description = "CloudFront price class"
   type        = string
-  default     = "PriceClass_200"
+
+  default = "PriceClass_200"
 }
 
 # 기존의 alb_dns_name 변수는 서브도메인 방식에서 필요 없으므로 제거.
+
+# ========================================
+# Route53 / ACM (트랙 1)
+# ========================================
+variable "root_domain" {
+  description = "team6 호스팅 영역 도메인 (가비아 singleuser.cloud 영역에서 NS 위임)"
+  type        = string
+}
+
+variable "api_subdomain" {
+  description = "API 서브도메인 prefix (root_domain 앞에 붙음)"
+  type        = string
+  default     = "api"
+}
+

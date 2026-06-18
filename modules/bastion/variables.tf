@@ -8,11 +8,6 @@ variable "iam_role_permissions_boundary" {
   type        = string
 }
 
-variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
-}
-
 variable "subnet_id" {
   description = "Subnet ID for bastion instance"
   type        = string

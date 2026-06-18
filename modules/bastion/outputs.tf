@@ -1,5 +1,5 @@
 output "instance_id" {
-  description = "Bastion EC2 instance ID"
+  description = "SSM 접속용: aws ssm start-session --target <id>"
   value       = aws_instance.this.id
 }
 
@@ -9,6 +9,6 @@ output "role_arn" {
 }
 
 output "security_group_id" {
-  description = "Bastion security group ID"
+  description = "RDS/Redis SG에서 이 SG를 허용하면 Bastion에서 접근 가능"
   value       = var.security_group_id
 }

@@ -20,7 +20,7 @@ variable "common_tags" {
 variable "cloudfront_enabled" {
   description = "Enable CloudFront distribution"
   type        = bool
-  default     = false
+  default     = true
 }
 
 # CloudFront Price Class
@@ -37,6 +37,20 @@ variable "price_class" {
 # modules/s3의 frontend_bucket_domain_name output을 넘겨받습니다.
 variable "frontend_bucket_domain_name" {
   description = "Frontend S3 bucket regional domain name"
+  type        = string
+  default     = null
+}
+
+# [트랙 1] 연동용: us-east-1 ACM 인증서 ARN 변수 추가
+variable "acm_virginia_certificate_arn" {
+  description = "ACM Certificate ARN from us-east-1 (Track 1 output)"
+  type        = string
+  default     = null
+}
+
+# [트랙 1] 연동용: Route53 Hosted Zone ID 변수 추가
+variable "route53_zone_id" {
+  description = "Route53 Hosted Zone ID for domain A record alias"
   type        = string
   default     = null
 }
