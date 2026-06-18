@@ -34,10 +34,36 @@ resource "aws_s3_bucket_public_access_block" "image" {
 
   bucket = aws_s3_bucket.image[0].id
 
+  # 식당 이미지는 비공개 정보가 아니라 버킷 정책으로 공개 읽기를 허용한다(아래
+  # aws_s3_bucket_policy.image). ACL은 계속 막아두고 정책 기반 공개만 연다.
   block_public_acls       = true
-  block_public_policy     = true
+  block_public_policy     = false
   ignore_public_acls      = true
-  restrict_public_buckets = true
+  restrict_public_buckets = false
+}
+
+# restaurants/* 객체만 공개 읽기 허용.
+# presigned GET URL(만료 있음)을 API 응답/프론트 상태에 들고 있다가 만료 후
+# 403이 나는 문제를 막기 위해, 비공개 정보가 아닌 식당 이미지는 영구 공개 URL로 제공한다.
+resource "aws_s3_bucket_policy" "image" {
+  count = var.image_bucket_enabled ? 1 : 0
+
+  bucket = aws_s3_bucket.image[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowPublicReadRestaurantImages"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.image[0].arn}/restaurants/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.image]
 }
 
 # CORS 설정
