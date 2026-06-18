@@ -19,8 +19,8 @@ module "acm" {
   source = "../../modules/acm"
 
   providers = {
-    aws            = aws
-    aws.us_east_1  = aws.us_east_1
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
   }
 
   root_domain     = var.root_domain
@@ -51,21 +51,56 @@ resource "aws_route53_record" "api" {
 module "bastion" {
   source = "../../modules/bastion"
 
-  project   = var.project
-  vpc_id    = module.vpc.vpc_id
-  subnet_id = module.vpc.public_subnet_ids[0]
+  name_prefix                   = "${var.project}-prod"
+  iam_role_permissions_boundary = var.iam_role_permissions_boundary
+  subnet_id                     = module.vpc.public_subnet_ids[0]
+  security_group_id             = aws_security_group.bastion.id
+  eks_cluster_arn               = module.eks.cluster_arn
+  instance_type                 = "t3.micro"
+  common_tags                   = local.common_tags
 }
 
 module "eks" {
   source = "../../modules/eks"
 
-  cluster_name       = var.eks_cluster_name
-  cluster_version    = var.eks_cluster_version
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnet_ids
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  node_instance_types = var.eks_node_instance_types
-  node_desired_size  = var.eks_node_desired_size
-  node_min_size      = var.eks_node_min_size
-  node_max_size      = var.eks_node_max_size
+  name_prefix                   = "${var.project}-prod"
+  iam_role_permissions_boundary = var.iam_role_permissions_boundary
+  vpc_id                        = module.vpc.vpc_id
+  private_app_subnet_ids        = module.vpc.private_subnet_ids
+  cluster_version               = var.eks_cluster_version
+  endpoint_public_access        = false
+  endpoint_private_access       = true
+  public_access_cidrs           = []
+  node_desired_size             = var.eks_node_desired_size
+  node_min_size                 = var.eks_node_min_size
+  node_max_size                 = var.eks_node_max_size
+  node_instance_types           = var.eks_node_instance_types
+  admin_principal_arns          = var.admin_principal_arns
+  common_tags                   = local.common_tags
+}
+
+locals {
+  common_tags = {
+    Project     = var.project
+    Environment = "prod"
+    Team        = "team6"
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_security_group" "bastion" {
+  name        = "${var.project}-prod-bastion-sg"
+  description = "Bastion SG: SSM only, no inbound"
+  vpc_id      = module.vpc.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project}-prod-bastion-sg"
+  })
 }

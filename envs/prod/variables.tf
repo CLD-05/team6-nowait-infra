@@ -51,7 +51,13 @@ variable "eks_cluster_name" {
 
 variable "eks_cluster_version" {
   type    = string
-  default = "1.30"
+  default = "1.34"
+}
+
+variable "admin_principal_arns" {
+  description = "EKS Admin 권한 부여 대상 IAM principal ARN 목록"
+  type        = list(string)
+  default     = []
 }
 
 variable "eks_node_instance_types" {

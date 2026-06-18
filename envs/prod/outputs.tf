@@ -23,9 +23,9 @@ output "eks_cluster_endpoint" {
   value = module.eks.cluster_endpoint
 }
 
-output "eks_oidc_provider_arn" {
+output "eks_oidc_issuer_url" {
   description = "IRSA 설정 시 사용 (트랙 3에 전달)"
-  value       = module.eks.oidc_provider_arn
+  value       = module.eks.oidc_provider_url
 }
 
 output "bastion_instance_id" {

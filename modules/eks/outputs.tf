@@ -43,12 +43,7 @@ output "node_role_arn" {
   value       = aws_iam_role.node.arn
 }
 
-output "oidc_provider_arn" {
-  description = "IRSA용 OIDC provider ARN"
-  value       = aws_iam_openid_connect_provider.cluster.arn
-}
-
 output "oidc_provider_url" {
-  description = "EKS OIDC issuer URL"
-  value       = aws_iam_openid_connect_provider.cluster.url
+  description = "EKS OIDC issuer URL (IRSA용 — platform-addons에서 사용)"
+  value       = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
