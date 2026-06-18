@@ -121,7 +121,8 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 # CloudFront OAC만 접근 허용합니다.
 # cloudfront_distribution_arn은 modules/cloudfront에서 넘겨받습니다.
 resource "aws_s3_bucket_policy" "frontend" {
-  count = var.frontend_bucket_enabled && var.cloudfront_distribution_arn != null ? 1 : 0
+  # ARN 값 대신, CloudFront를 켜고 끄는 변수(cloudfront_enabled)를 조건으로 바라보게 합니다!
+  count = var.frontend_bucket_enabled && var.cloudfront_enabled ? 1 : 0
 
   bucket = aws_s3_bucket.frontend[0].id
 
