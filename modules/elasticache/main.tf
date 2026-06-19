@@ -18,7 +18,7 @@ resource "aws_elasticache_subnet_group" "this" {
 # ----------------------------------------
 #
 # auth_token_enabled = true인 환경(prod)에서만 생성됩니다.
-# ElastiCache auth_token 제약: 16~128자, '/', '"', '@', ' ' 금지.
+# ElastiCache auth_token 제약:
 # 생성된 값은 outputs.tf의 auth_token으로 내보내져서, 운영자가
 # team6-nowait/{env}/redis Secrets Manager 시크릿에 직접 넣어줘야 합니다
 # (이 저장소는 시크릿 값을 Terraform에 보관하지 않는다는 기존 방침과 동일하게,
@@ -27,7 +27,7 @@ resource "random_password" "auth_token" {
   count            = var.auth_token_enabled ? 1 : 0
   length           = 32
   special          = true
-  override_special = "!#$%^&*()-_=+[]{}<>:?"
+  override_special = "!&#$^<>-"
 }
 
 # ----------------------------------------
