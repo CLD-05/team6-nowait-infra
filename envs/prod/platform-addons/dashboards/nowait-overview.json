@@ -1,0 +1,573 @@
+{
+    "uid": "nowait-prod-overview",
+    "title": "NoWait Overview (prod)",
+    "tags": [
+        "nowait",
+        "prod"
+    ],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 2,
+    "refresh": "10s",
+    "time": {
+        "from": "now-30m",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 100,
+            "type": "row",
+            "title": "🚪 구역 1. 핵심 골든 시그널 (Golden Signals)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "id": 1,
+            "title": "1. 실시간 가상 유저 수 (Concurrent Users)",
+            "type": "stat",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 0,
+                "y": 1
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(ngrinder_active_vusers) OR vector(0)",
+                    "legendFormat": "vusers"
+                }
+            ]
+        },
+        {
+            "id": 200,
+            "title": "2. 현재 시스템 유입량 (RPS)",
+            "type": "stat",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 6,
+                "y": 1
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\"}[1m]))",
+                    "legendFormat": "RPS"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "title": "3. 현재 시스템 처리량 (TPS)",
+            "type": "stat",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 12,
+                "y": 1
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\", status!~\"5.*\"}[1m]))",
+                    "legendFormat": "Success TPS"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "4. 실시간 시스템 에러율 (Error Rate)",
+            "type": "stat",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 1
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "max": 100,
+                    "min": 0
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\", status=~\"5.*\"}[1m])) / sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\"}[1m])) * 100 OR vector(0)",
+                    "legendFormat": "Error Rate"
+                }
+            ]
+        },
+        {
+            "id": 101,
+            "type": "row",
+            "title": "🚪 구역 2. 지연 시간 상세 분석 (Latency)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 7
+            }
+        },
+        {
+            "id": 4,
+            "title": "5. 평균 응답 시간 vs p95 응답 시간",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 8
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{namespace=\"nowait-prod\"}[5m])) by (le))",
+                    "legendFormat": "p95 Latency"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_sum{namespace=\"nowait-prod\"}[5m])) / sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\"}[5m]))",
+                    "legendFormat": "Avg Latency"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "6. 최악의 사용자 경험 지표, p99 응답 시간",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 8
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{namespace=\"nowait-prod\"}[5m])) by (le))",
+                    "legendFormat": "p99 Latency"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "title": "7. 주요 도메인 API별 지연 시간",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 8
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_sum{namespace=\"nowait-prod\"}[5m])) by (uri) / sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\"}[5m])) by (uri)",
+                    "legendFormat": "{{uri}}"
+                }
+            ]
+        },
+        {
+            "id": 102,
+            "type": "row",
+            "title": "🚪 구역 3. 스프링 부트 애플리케이션 상태 (Application)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            }
+        },
+        {
+            "id": 7,
+            "title": "8. JVM 힙 메모리 가동률",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 17
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "jvm_memory_used_bytes{namespace=\"nowait-prod\", area=\"heap\"} / jvm_memory_max_bytes{namespace=\"nowait-prod\", area=\"heap\"} * 100",
+                    "legendFormat": "JVM Heap"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "title": "9. 톰캣 가동 스레드 풀 수",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 6,
+                "y": 17
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "tomcat_threads_current_threads{namespace=\"nowait-prod\"} / tomcat_threads_config_max_threads{namespace=\"nowait-prod\"} * 100",
+                    "legendFormat": "Tomcat Active Threads (%)"
+                }
+            ]
+        },
+        {
+            "id": 9,
+            "title": "10. HTTP 응답 상태 코드 비율",
+            "type": "piechart",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 17
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"nowait-prod\"}[5m])) by (status)",
+                    "legendFormat": "{{status}}"
+                }
+            ]
+        },
+        {
+            "id": 201,
+            "title": "11. 현재 API 서버 Replica 수 (KEDA 모니터링)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 17
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "kube_deployment_status_replicas{namespace=\"nowait-prod\", deployment=\"nowait-api\"}",
+                    "legendFormat": "nowait-api Pod Count"
+                }
+            ]
+        },
+        {
+            "id": 103,
+            "type": "row",
+            "title": "🚪 구역 4. Redis 고속 데이터 처리 상태 (Redis)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 25
+            }
+        },
+        {
+            "id": 10,
+            "title": "12. Redis 실시간 메모리 사용량",
+            "type": "gauge",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 26
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "max": 100,
+                    "min": 0
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "redis_memory_used_bytes{namespace=\"nowait-prod\"} / redis_memory_max_bytes{namespace=\"nowait-prod\"} * 100",
+                    "legendFormat": "Redis Memory Usage"
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "title": "13. Redis 초당 명령어 처리 수 (Ops)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 26
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(redis_commands_processed_total{namespace=\"nowait-prod\"}[1m])",
+                    "legendFormat": "Commands/sec"
+                }
+            ]
+        },
+        {
+            "id": 12,
+            "title": "14. Redis 연결된 백엔드 인스턴스 수",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 26
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "redis_connected_clients{namespace=\"nowait-prod\"}",
+                    "legendFormat": "Clients"
+                }
+            ]
+        },
+        {
+            "id": 104,
+            "type": "row",
+            "title": "🚪 구역 5. 쿠버네티스 노드 인프라 포화도 (Infrastructure)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 34
+            }
+        },
+        {
+            "id": 13,
+            "title": "15. 가상 컴퓨터별 CPU 가동률 (EC2)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 35
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(node_cpu_seconds_total{mode!=\"idle\"}[5m])) by (node) / sum(rate(node_cpu_seconds_total[5m])) by (node) * 100",
+                    "legendFormat": "{{node}}"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "title": "16. 노드별 네트워크 들어오는 양",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 6,
+                "y": 35
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "Bps"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(node_network_receive_bytes_total[5m])) by (node)",
+                    "legendFormat": "{{node}}"
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "title": "17. 데이터베이스(MySQL) 커넥션 수",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 35
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "cloudwatch",
+                        "uid": "cloudwatch"
+                    },
+                    "namespace": "AWS/RDS",
+                    "metricName": "DatabaseConnections",
+                    "statistic": "Average",
+                    "dimensions": {
+                        "DBInstanceIdentifier": "team6-nowait-prod-rds"
+                    },
+                    "region": "ap-northeast-2",
+                    "refId": "A",
+                    "queryMode": "Metrics",
+                    "metricQueryType": 0,
+                    "metricEditorMode": 0,
+                    "matchExact": true
+                }
+            ]
+        },
+        {
+            "id": 202,
+            "title": "18. 데이터베이스(MySQL) CPU 가동률",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 35
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "cloudwatch",
+                        "uid": "cloudwatch"
+                    },
+                    "namespace": "AWS/RDS",
+                    "metricName": "CPUUtilization",
+                    "statistic": "Average",
+                    "dimensions": {
+                        "DBInstanceIdentifier": "team6-nowait-prod-rds"
+                    },
+                    "region": "ap-northeast-2",
+                    "refId": "A",
+                    "queryMode": "Metrics",
+                    "metricQueryType": 0,
+                    "metricEditorMode": 0,
+                    "matchExact": true
+                }
+            ]
+        }
+    ]
+}
