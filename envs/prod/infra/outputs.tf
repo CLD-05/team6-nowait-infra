@@ -198,6 +198,16 @@ output "image_bucket_domain_name" {
   description = "Image S3 bucket regional domain name"
   value       = module.s3.image_bucket_domain_name
 }
+
+
+# ----------------------------------------
+# CloudFront Outputs
+# ----------------------------------------
+output "frontend_cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution for production frontend CI/CD"
+  value       = module.cloudfront.distribution_id
+}
+
 # ========================================
 # Route53 / ACM (트랙 1)
 # ========================================

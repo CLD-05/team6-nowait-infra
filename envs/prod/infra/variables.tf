@@ -365,14 +365,19 @@ variable "s3_image_prefix" {
 }
 
 # ========================================
-# CloudFront
-# 이번 prod 1차 범위에서는 사용하지 않음
+# CloudFront & Frontend (이번 prod 범위 포함 완료)
 # ========================================
-variable "alb_dns_name" {
-  description = "ALB DNS name for CloudFront API origin"
+
+# main.tf에서 주입하는 price_class 변수 선언부를 추가.
+variable "price_class" {
+  description = "CloudFront price class"
   type        = string
-  default     = null
+
+  default = "PriceClass_200"
 }
+
+# 기존의 alb_dns_name 변수는 서브도메인 방식에서 필요 없으므로 제거.
+
 # ========================================
 # Route53 / ACM (트랙 1)
 # ========================================
@@ -386,3 +391,4 @@ variable "api_subdomain" {
   type        = string
   default     = "api"
 }
+

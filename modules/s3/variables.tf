@@ -48,3 +48,9 @@ variable "cloudfront_distribution_arn" {
   type        = string
   default     = null
 }
+
+variable "cloudfront_enabled" {
+  description = "Enable CloudFront distribution flag for policy count"
+  type        = bool
+  default     = true
+}

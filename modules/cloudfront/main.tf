@@ -16,9 +16,8 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 # ========================================
 # CloudFront Distribution
 #
-# 구조:
+# 구조: 서브도메인
 # 사용자 → CloudFront → S3 Frontend Bucket (정적 파일)
-#                    → ALB (API 요청 /api/*)
 # ========================================
 resource "aws_cloudfront_distribution" "this" {
   count = var.cloudfront_enabled ? 1 : 0
@@ -27,28 +26,15 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   price_class         = var.price_class
 
+  aliases = ["nowait.singleuser.cloud"]
+
   # ----------------------------------------
-  # Origin 1: S3 Frontend Bucket
+  # Origin: S3 Frontend Bucket 단독 연결
   # ----------------------------------------
   origin {
     domain_name              = var.frontend_bucket_domain_name
     origin_id                = "S3-${var.name_prefix}-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend[0].id
-  }
-
-  # ----------------------------------------
-  # Origin 2: ALB (API 요청)
-  # ----------------------------------------
-  origin {
-    domain_name = var.alb_dns_name
-    origin_id   = "ALB-${var.name_prefix}"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
   }
 
   # ----------------------------------------
@@ -76,31 +62,6 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   # ----------------------------------------
-  # Ordered Cache Behavior
-  # /api/* 요청은 ALB로 포워딩
-  # ----------------------------------------
-  ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    target_origin_id       = "ALB-${var.name_prefix}"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-
-    forwarded_values {
-      query_string = true
-      headers      = ["Authorization", "Content-Type", "Origin"]
-      cookies {
-        forward = "all"
-      }
-    }
-
-    # API 요청은 캐시하지 않음
-    min_ttl     = 0
-    default_ttl = 0
-    max_ttl     = 0
-  }
-
-  # ----------------------------------------
   # React SPA 라우팅
   # 404/403 응답을 index.html로 리다이렉트
   # ----------------------------------------
@@ -125,10 +86,30 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn            = var.acm_virginia_certificate_arn
+    ssl_support_method             = var.acm_virginia_certificate_arn != null ? "sni-only" : null
+    minimum_protocol_version       = var.acm_virginia_certificate_arn != null ? "TLSv1.2_2021" : null
+    cloudfront_default_certificate = var.acm_virginia_certificate_arn == null ? true : false
   }
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-cf"
   })
+}
+
+# ========================================
+# Route53 DNS A 레코드 추가 (도메인 자동 연결)
+# ========================================
+resource "aws_route53_record" "frontend" {
+  count = var.cloudfront_enabled && var.route53_zone_id != null && var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = "nowait.singleuser.cloud"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this[0].domain_name
+    zone_id                = aws_cloudfront_distribution.this[0].hosted_zone_id
+    evaluate_target_health = false
+  }
 }
