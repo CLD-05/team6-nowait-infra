@@ -1,0 +1,141 @@
+# =========================================================================
+# [NoWait 프로젝트] 프로메테우스 & 그라파나 & 알람매니저 통합 인프라 설정 파일
+# 경로: envs/prod/platform-addons/helm-values/kube-prometheus-stack-values.yaml
+# =========================================================================
+
+# -------------------------------------------------------------------------
+# 1. 프로메테우스 기지국 및 알람 규칙 설정
+# -------------------------------------------------------------------------
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 1d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+# [이식 완료] 우리가 만든 정밀 에러 감지 사이렌 규칙
+additionalPrometheusRulesMap:
+  nowait-alert-rules:
+    groups:
+    - name: nowait-core-rules
+      rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🚨 [NoWait 비상] 서버 기지국 다운!"
+          description: "현재 컴퓨터 주소 {{ $labels.instance }} 가 1분 이상 응답하지 않습니다. 즉시 확인이 필요합니다."
+
+      - alert: HighCpuUsage
+        expr: sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (node) / sum(rate(node_cpu_seconds_total[5m])) by (node) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ [NoWait 경고] EC2 CPU 과부하 (80% 돌파)"
+          description: "가상 컴퓨터 {{ $labels.node }} 의 CPU 사용량이 5분 동안 80%를 초과했습니다."
+
+      - alert: Http5xxRateHigh
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.*"}[1m])) / sum(rate(http_server_requests_seconds_count[1m])) * 100 > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🔥 [NoWait 심각] 스프링 부트 500 에러 발생률 급증!"
+          description: "최근 1분간 백엔드 API 에러율이 5%를 초과했습니다. DB 커넥션이나 코드 예외를 확인하세요."
+
+# -------------------------------------------------------------------------
+# 2. 그라파나 대시보드 화면 및 AWS 연동 설정
+# -------------------------------------------------------------------------
+grafana:
+  replicas: 1
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-path: /api/health
+      alb.ingress.kubernetes.io/healthcheck-port: "3000"
+    hosts: []
+    path: /
+    pathType: Prefix
+  
+  # AWS RDS(MySQL) 및 ElastiCache(Redis) 모니터링을 위한 CloudWatch 연동
+  additionalDataSources:
+    - name: CloudWatch
+      uid: cloudwatch
+      type: cloudwatch
+      jsonData:
+        authType: default
+        defaultRegion: ap-northeast-2
+
+# -------------------------------------------------------------------------
+# 3. 알람매니저 비상벨 및 쿠버네티스 금고 연동 설정
+# -------------------------------------------------------------------------
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+    
+    # [이식 완료] 팀원이 약속한 쿠버네티스 비밀 금고 이름 연동
+    secrets:
+      - alertmanager-slack-webhook
+
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'nowait-prod-alert'
+    
+    # [이식 완료] 금고에서 주소를 읽어와서 우리만의 예쁜 템플릿으로 발송
+    receivers:
+    - name: 'nowait-prod-alert'
+      slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
+        channel: '#nowait-prod-alert'
+        send_resolved: true
+        text: >-
+          {{ range .Alerts }}
+            *상황:* {{ .Annotations.summary }}
+            *상태:* {{ .Status | upper }}
+            *등급:* {{ .Labels.severity }}
+            *상세 내용:* {{ .Annotations.description }}
+            *발생 시각:* {{ .StartsAt.Local }}
+          {{ end }}
