@@ -4,8 +4,8 @@
   "tags": ["nowait"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
-  "refresh": "10s",
+  "version": 5,
+  "refresh": "30s",
   "time": { "from": "now-30m", "to": "now" },
   "panels": [
     { "id": 500, "type": "row", "title": "Row 0 — Service Overview / Health", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
@@ -316,15 +316,15 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 141 },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "kube_deployment_spec_replicas{namespace=~\"nowait-dev|argocd|keda|karpenter|kube-system|external-secrets\"}", "legendFormat": "desired {{namespace}}/{{deployment}}" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "kube_deployment_status_replicas_available{namespace=~\"nowait-dev|argocd|keda|karpenter|kube-system|external-secrets\"}", "legendFormat": "available {{namespace}}/{{deployment}}" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "kube_deployment_spec_replicas{deployment=~\"nowait-api|nowait-worker|argocd-.*|keda-operator|karpenter|aws-load-balancer-controller|external-secrets.*\"}", "legendFormat": "desired {{namespace}}/{{deployment}}" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "kube_deployment_status_replicas_available{deployment=~\"nowait-api|nowait-worker|argocd-.*|keda-operator|karpenter|aws-load-balancer-controller|external-secrets.*\"}", "legendFormat": "available {{namespace}}/{{deployment}}" }
       ]
     },
     {
-      "id": 71, "title": "Pod Restarts (15m, cluster-wide)", "type": "timeseries",
+      "id": 71, "title": "Pod Restarts (15m, focus workloads)", "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 141 },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "increase(kube_pod_container_status_restarts_total[15m]) > 0", "legendFormat": "{{namespace}}/{{pod}}" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "increase(kube_pod_container_status_restarts_total{pod=~\"nowait-api-.*|nowait-worker-.*|argocd-.*|keda-.*|karpenter-.*|aws-load-balancer-controller-.*|external-secrets-.*\"}[15m]) > 0", "legendFormat": "{{namespace}}/{{pod}}" }]
     },
     {
       "id": 72, "title": "Pending Pods (cluster-wide)", "type": "timeseries",
@@ -378,7 +378,7 @@
       "id": 81, "title": "Node CPU Usage %", "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 174 },
       "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "100 - (avg by (node) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{node}}" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{instance}}" }]
     },
     {
       "id": 82, "title": "Node Memory Available", "type": "timeseries",
@@ -453,14 +453,14 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 219 },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "targets": [
-        { "datasource": { "type": "cloudwatch", "uid": "cloudwatch" }, "namespace": "AWS/ApplicationELB", "metricName": "HealthyHostCount", "statistic": "Average", "dimensions": { "LoadBalancer": "app/k8s-nowaitde-nowaitap-18d4b22d09/f5ad2b9b70f05bd5" }, "region": "ap-northeast-2", "refId": "A" },
-        { "datasource": { "type": "cloudwatch", "uid": "cloudwatch" }, "namespace": "AWS/ApplicationELB", "metricName": "UnHealthyHostCount", "statistic": "Average", "dimensions": { "LoadBalancer": "app/k8s-nowaitde-nowaitap-18d4b22d09/f5ad2b9b70f05bd5" }, "region": "ap-northeast-2", "refId": "B" }
+        { "datasource": { "type": "cloudwatch", "uid": "cloudwatch" }, "namespace": "AWS/ApplicationELB", "metricName": "HealthyHostCount", "statistic": "Average", "dimensions": { "TargetGroup": "targetgroup/k8s-nowaitde-nowaitap-0ca82d2292/bf4f6fbe0323ec81", "LoadBalancer": "app/k8s-nowaitde-nowaitap-18d4b22d09/f5ad2b9b70f05bd5" }, "region": "ap-northeast-2", "refId": "A" },
+        { "datasource": { "type": "cloudwatch", "uid": "cloudwatch" }, "namespace": "AWS/ApplicationELB", "metricName": "UnHealthyHostCount", "statistic": "Average", "dimensions": { "TargetGroup": "targetgroup/k8s-nowaitde-nowaitap-0ca82d2292/bf4f6fbe0323ec81", "LoadBalancer": "app/k8s-nowaitde-nowaitap-18d4b22d09/f5ad2b9b70f05bd5" }, "region": "ap-northeast-2", "refId": "B" }
       ]
     },
     {
-      "id": 95, "title": "Note — TargetGroup Dimension", "type": "text",
+      "id": 95, "title": "Note — Target Group", "type": "text",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 219 },
-      "options": { "mode": "markdown", "content": "Healthy/UnhealthyHostCount는 AWS 기준 **TargetGroup** 차원이 정확하다 (LoadBalancer 차원만으로는 No data일 수 있음). 데이터가 안 보이면 `aws elbv2 describe-target-groups`로 ARN을 받아 `dimensions: { TargetGroup: \"<arn-suffix>\", LoadBalancer: \"...\" }`로 보강 필요.\n\n이번 ALB 리스너 전체 소실 장애 때는 'ALB-level 5xx'와 'Healthy Host Count' 패널이 있었다면 즉시 원인이 ALB 자체임을 알 수 있었을 것 — 이번에 처음 추가." }
+      "options": { "mode": "markdown", "content": "TargetGroup ARN(`k8s-nowaitde-nowaitap-0ca82d2292`)을 `aws elbv2 describe-target-groups`로 직접 조회해서 보강 완료. AWS LBC가 Ingress 변경 시 TargetGroup을 재생성하면 ARN suffix가 바뀌므로, 이 패널이 갑자기 No data가 되면 ARN을 다시 조회해야 한다.\n\n이번 ALB 리스너 전체 소실 장애 때는 'ALB-level 5xx'와 이 'Healthy Host Count' 패널이 있었다면 즉시 원인이 ALB 자체임을 알 수 있었을 것 — 이번에 처음 추가." }
     },
 
     { "id": 509, "type": "row", "title": "Row 9 — ArgoCD / Release Status", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 227 } },
