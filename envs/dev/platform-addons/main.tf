@@ -49,7 +49,6 @@ module "addons" {
   enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
   kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version
   kube_prometheus_stack_values_file   = "${path.module}/helm-values/kube-prometheus-stack-values.yaml"
-  nowait_dashboard_json_file          = "${path.module}/dashboards/nowait-overview.json"
   nowait_core_dashboard_json_file     = "${path.module}/dashboards/nowait-core-ops.json"
 
   # redis_exporter (ElastiCache 메트릭)

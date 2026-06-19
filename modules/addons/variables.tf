@@ -207,12 +207,6 @@ variable "karpenter_values_file" {
   default     = null
 }
 
-variable "nowait_dashboard_json_file" {
-  description = "Path to the NoWait custom Grafana dashboard JSON file"
-  type        = string
-  default     = null
-}
-
 variable "nowait_core_dashboard_json_file" {
   description = "Path to the NoWait core-ops Grafana dashboard JSON file (NoWait 핵심 운영 대시보드)"
   type        = string
