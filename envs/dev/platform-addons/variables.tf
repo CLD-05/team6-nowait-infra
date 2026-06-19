@@ -194,9 +194,3 @@ variable "argocd_chart_version" {
   description = "Argo CD Helm chart version"
   type        = string
 }
-
-variable "argocd_values_file" {
-  description = "Path to Argo CD values file"
-  type        = string
-  default     = null
-}

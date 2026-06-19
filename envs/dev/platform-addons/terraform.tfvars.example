@@ -67,6 +67,9 @@ eso_chart_version = "0.14.4"
 # Argo CD Helm chart version
 enable_argocd        = true
 argocd_chart_version = "9.5.9"
+# argocd_values_file는 envs/dev/platform-addons/main.tf에서 path.module 기준으로
+# 직접 하드코딩한다 (keda/karpenter/kube-prometheus-stack과 동일 패턴) — tfvars는
+# path.module 표현식을 못 써서 여기서 상대경로를 주면 잘못된 위치를 가리킨다.
 
 
 # ========================================
