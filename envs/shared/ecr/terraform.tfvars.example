@@ -1,0 +1,31 @@
+# ========================================
+# Common
+# ========================================
+
+team        = "team6"
+project     = "nowait"
+environment = "shared"
+region      = "ap-northeast-2"
+
+
+# ========================================
+# ECR
+# ========================================
+
+# dev/prod가 공통으로 사용하는 ECR Repository
+repository_name = "team6-nowait-app"
+
+# 같은 tag를 덮어쓰지 않도록 IMMUTABLE 권장
+image_tag_mutability = "IMMUTABLE"
+
+# 이미지 push 시 취약점 스캔 활성화
+scan_on_push = true
+
+# 이미지가 들어있는 ECR Repository가 실수로 삭제되지 않도록 false 권장
+force_delete = false
+
+# 태그 없는 이미지는 7일 후 삭제
+untagged_image_expire_days = 7
+
+# dev-, prod-, sha- 태그 이미지는 최근 30개만 유지
+keep_recent_image_count = 30

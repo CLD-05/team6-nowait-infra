@@ -1,0 +1,36 @@
+variable "name_prefix" {
+  description = "Common resource name prefix"
+  type        = string
+}
+
+variable "iam_role_permissions_boundary" {
+  description = "Required permissions boundary for IAM roles"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for bastion instance"
+  type        = string
+}
+
+variable "security_group_id" {
+  description = "Bastion security group ID"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "Bastion instance type"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "common_tags" {
+  description = "Common tags"
+  type        = map(string)
+  default     = {}
+}
+
+variable "eks_cluster_arn" {
+  description = "EKS cluster ARN that bastion can describe"
+  type        = string
+}

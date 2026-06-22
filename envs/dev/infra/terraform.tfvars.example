@@ -1,0 +1,184 @@
+# ========================================
+# Common
+# ========================================
+team        = "team6"
+project     = "nowait"
+environment = "dev"
+name_prefix = "team6-nowait-dev"
+region      = "ap-northeast-2"
+
+# IAM Role 생성 시 필수 permissions boundary
+iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
+
+# ========================================
+# Network
+# ========================================
+
+# Dev VPC CIDR
+vpc_cidr = "10.6.0.0/17"
+
+# 사용할 AZ 개수
+az_count = 2
+
+# VPC DNS 설정
+# EKS, RDS, ElastiCache endpoint 사용을 위해 true 권장
+enable_dns_hostnames = true
+enable_dns_support   = true
+
+# Public Subnet: ALB, NAT Gateway 위치
+public_subnet_cidrs = [
+  "10.6.0.0/24",
+  "10.6.1.0/24"
+]
+
+# Private App Subnet: EKS Node, API Pod, Worker Pod 위치
+private_app_subnet_cidrs = [
+  "10.6.16.0/20",
+  "10.6.32.0/20"
+]
+
+# Private DB Subnet: RDS, Redis 위치
+private_db_subnet_cidrs = [
+  "10.6.64.0/24",
+  "10.6.65.0/24"
+]
+
+# Dev는 비용 절감을 위해 NAT Gateway 1개 사용
+nat_gateway_mode = "single"
+
+
+# ========================================
+# EKS
+# ========================================
+
+eks_cluster_version = "1.34"
+
+node_desired_size   = 2
+node_min_size       = 2
+node_max_size       = 2
+node_instance_types = ["t3.large"]
+
+# dev는 로컬 kubectl 접근을 위해 public endpoint 허용
+# 단, 반드시 팀원 공인 IP/32만 허용
+eks_endpoint_public_access  = true
+eks_endpoint_private_access = true
+
+eks_public_access_cidrs = [
+  "<TEAM_MEMBER_PUBLIC_IP>/32"
+]
+
+# EKS Control Plane 로그
+enabled_cluster_log_types = [
+  "api",
+  "audit",
+  "authenticator",
+  "controllerManager",
+  "scheduler"
+]
+
+# EKS Access Entry
+admin_principal_arns = [
+  "arn:aws:iam::194722398200:user/<ADMIN_USER>"
+]
+
+developer_principal_arns = [
+  "arn:aws:iam::194722398200:user/<DEVELOPER_USER>"
+]
+
+viewer_principal_arns = [
+  "arn:aws:iam::194722398200:user/<VIEWER_USER>"
+]
+
+
+# ========================================
+# RDS
+# ========================================
+
+# Dev RDS는 비용 절감을 위해 Single-AZ로 구성
+db_engine_version = "8.0" 
+db_name           = "nowait"
+
+db_master_username = "admin"
+
+db_instance_class        = "db.t4g.medium" # 부하테스트시에는 db.m7g.larg로 변경하기
+db_allocated_storage     = 20
+db_max_allocated_storage = 100
+
+db_multi_az = false
+
+db_backup_retention = 1
+
+db_deletion_protection = false
+db_skip_final_snapshot = true
+
+db_final_snapshot_identifier = null
+
+# dev에서는 테스트 편의를 위해 true 사용 가능
+db_apply_immediately = true
+
+# ========================================
+# ElastiCache Redis
+# ========================================
+
+# Dev Redis: 비용 절감용 Single Node
+redis_node_type                = "cache.t4g.medium" # 부하테스트시에는 cache.m7g.large로 변경하기
+redis_replica_count            = 0
+redis_multi_az_enabled         = false
+redis_automatic_failover       = false
+redis_snapshot_retention_limit = 0
+
+
+# ========================================
+# Bastion
+# ========================================
+
+# dev는 Bastion을 사용하지 않고,
+# EKS Public Endpoint + Access Entry + 팀원 공인 IP 제한으로 kubectl 접근
+bastion_enabled          = false
+bastion_ssh_cidr_blocks = []
+
+
+
+
+
+# ========================================
+# S3 / CloudFront
+# ========================================
+
+# dev에서는 이미지 업로드 테스트용 S3 Bucket만 생성합니다.
+image_bucket_enabled = true
+
+# React 정적 파일 배포용 bucket은 prod에서만 사용합니다.
+frontend_bucket_enabled = false
+
+# CloudFront는 prod에서만 사용합니다.
+cloudfront_enabled = false
+
+
+# S3 이미지 업로드 object key prefix
+# 예:
+# images/restaurants/uuid.jpg
+# images/menus/uuid.jpg
+s3_image_prefix = "images/"
+
+# dev 개발 서버 주소
+# CRA: http://localhost:3000
+# Vite: http://localhost:5173
+cors_allowed_origins = [
+  "http://localhost:3000",
+  "http://localhost:5173"
+]
+
+# dev에서는 CloudFront를 사용하지 않으므로 null입니다.
+# prod에서 CloudFront를 사용할 때 ALB DNS name을 넣습니다.
+alb_dns_name = null
+
+
+
+
+# ========================================
+# CloudWatch
+# ========================================
+
+log_retention_days = 7

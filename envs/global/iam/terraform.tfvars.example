@@ -1,0 +1,23 @@
+# ========================================
+# Common
+# ========================================
+
+team        = "team6"
+project     = "nowait"
+environment = "global"
+name_prefix = "team6-nowait"
+region      = "ap-northeast-2"
+
+# ========================================
+# GitHub Actions OIDC Roles
+# ========================================
+
+github_org  = "CLD-05"
+github_repo = "team6-nowait-app"
+
+# 확인 방법:
+# cd envs/shared/ecr
+# terraform output repository_arn
+ecr_repository_arn = "ecr레포지토리ARN"
+
+iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"

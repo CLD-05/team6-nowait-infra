@@ -1,0 +1,19 @@
+controller:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+serviceAccount:
+  create: true
+  name: karpenter
+
+# kube-prometheus-stack Prometheus는 release: kube-prometheus-stack 라벨이 붙은
+# ServiceMonitor만 자동으로 스크랩한다 (nowait-api/argocd ServiceMonitor와 동일 패턴).
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack

@@ -1,0 +1,271 @@
+{
+  "id": null,
+  "uid": "nowait-core-ops",
+  "title": "NoWait 핵심 운영 대시보드",
+  "tags": ["nowait", "sre", "core"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 0,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "constant",
+        "query": "nowait-dev",
+        "current": { "text": "nowait-dev", "value": "nowait-dev" },
+        "hide": 2
+      }
+    ]
+  },
+  "panels": [
+    { "type": "row", "title": "서비스 전체 상태", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+
+    {
+      "type": "stat", "title": "API 5xx 에러율",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 },
+      "description": "nowait-api 전체 요청 대비 5xx 비율. 사용자 직접 영향 지표.",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job=\"nowait-api\"}[5m])), 1e-9)" } ]
+    },
+    {
+      "type": "stat", "title": "API p95 응답시간",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 },
+      "description": "nowait-api p95 지연. 폴링 UX 핵심 지표.",
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 3 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"nowait-api\"}[5m])) by (le))" } ]
+    },
+    {
+      "type": "timeseries", "title": "API 요청량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "refId": "A", "legendFormat": "req/s", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\"}[5m]))" } ]
+    },
+    {
+      "type": "gauge", "title": "대기 등록 성공률",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 },
+      "description": "TODO(custom metric): nowait_waiting_register_success_total / failure_total 계측 필요. 계측 전에는 No data.",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0.9, "max": 1, "decimals": 2, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.99 }, { "color": "green", "value": 0.995 } ] } } },
+      "targets": [ { "refId": "A", "expr": "sum(rate(nowait_waiting_register_success_total[5m])) / clamp_min(sum(rate(nowait_waiting_register_success_total[5m])) + sum(rate(nowait_waiting_register_failure_total[5m])), 1e-9)" } ]
+    },
+    {
+      "type": "stat", "title": "Pending Pod 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "description": "스케줄 불가/용량 부족 신호. 5분 이상 0 초과 시 조사.",
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(kube_pod_status_phase{namespace=\"$namespace\",phase=\"Pending\"})" } ]
+    },
+    {
+      "type": "table", "title": "ArgoCD 애플리케이션 상태",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 6 },
+      "description": "argocd_app_info 기반. sync_status / health_status 확인.",
+      "transformations": [ { "id": "labelsToFields", "options": {} }, { "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "container": true, "endpoint": true, "instance": true, "job": true, "namespace": true, "pod": true, "service": true, "autosync_enabled": true, "dest_server": true, "exported_namespace": true, "repo": true } } } ],
+      "targets": [ { "refId": "A", "format": "table", "instant": true, "expr": "argocd_app_info{project=\"nowait\"}" } ]
+    },
+
+    { "type": "row", "title": "API 요청 상태", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 10 } },
+
+    {
+      "type": "timeseries", "title": "엔드포인트별 요청량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 11 },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{method}} {{uri}}", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\",uri!~\"/actuator.*\"}[5m])) by (method, uri)" } ]
+    },
+    {
+      "type": "timeseries", "title": "엔드포인트별 5xx 에러율",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 11 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2 } },
+      "targets": [ { "refId": "A", "legendFormat": "{{uri}}", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\",status=~\"5..\",uri!~\"/actuator.*\"}[5m])) by (uri) / clamp_min(sum(rate(http_server_requests_seconds_count{job=\"nowait-api\",uri!~\"/actuator.*\"}[5m])) by (uri), 1e-9)" } ]
+    },
+    {
+      "type": "timeseries", "title": "엔드포인트별 p95 응답시간",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 18 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{uri}}", "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"nowait-api\",uri!~\"/actuator.*\"}[5m])) by (le, uri))" } ]
+    },
+    {
+      "type": "timeseries", "title": "HTTP 상태 코드 비율",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 18 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "stacking": { "mode": "normal" }, "fillOpacity": 40 } } },
+      "targets": [ { "refId": "A", "legendFormat": "{{status}}", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\"}[5m])) by (status)" } ]
+    },
+
+    { "type": "row", "title": "NoWait 비즈니스 지표", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 } },
+
+    {
+      "type": "timeseries", "title": "대기 등록 성공/실패",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 26 },
+      "description": "TODO(custom metric): nowait_waiting_register_success_total / failure_total 계측 필요.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "성공", "expr": "sum(rate(nowait_waiting_register_success_total[5m]))" }, { "refId": "B", "legendFormat": "실패", "expr": "sum(rate(nowait_waiting_register_failure_total[5m]))" } ]
+    },
+    {
+      "type": "timeseries", "title": "예약 성공/실패",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 26 },
+      "description": "TODO(custom metric): nowait_reservation_success_total / failure_total 계측 필요.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "성공", "expr": "sum(rate(nowait_reservation_success_total[5m]))" }, { "refId": "B", "legendFormat": "실패", "expr": "sum(rate(nowait_reservation_failure_total[5m]))" } ]
+    },
+    {
+      "type": "stat", "title": "현재 대기 중 사용자 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 26 },
+      "description": "TODO(custom metric): nowait_waiting_active_count (gauge) 계측 필요.",
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "max(nowait_waiting_active_count)" } ]
+    },
+    {
+      "type": "timeseries", "title": "수용 인원 초과 발생 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 33 },
+      "description": "정상적인 비즈니스 결과(만석)일 수 있음 — 시스템 장애 아님. 추세 참고용. TODO(custom metric): nowait_capacity_full_total.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "수용 초과", "expr": "sum(rate(nowait_capacity_full_total[5m]))" } ]
+    },
+    {
+      "type": "timeseries", "title": "중복 대기 시도 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 33 },
+      "description": "정상적인 비즈니스 결과(사용자 중복 탭)일 수 있음 — 시스템 장애 아님. TODO(custom metric): nowait_duplicate_waiting_attempt_total.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "중복 시도", "expr": "sum(rate(nowait_duplicate_waiting_attempt_total[5m]))" } ]
+    },
+    {
+      "type": "timeseries", "title": "폴링 요청량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 33 },
+      "description": "폴링 부하(용량 드라이버). custom 미계측 시 대기상태 조회 URI 기준 대체 쿼리 사용.",
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [ { "refId": "A", "legendFormat": "폴링 req/s (custom)", "expr": "sum(rate(nowait_polling_requests_total[1m]))" }, { "refId": "B", "legendFormat": "상태조회 req/s (대체)", "expr": "sum(rate(http_server_requests_seconds_count{job=\"nowait-api\",uri=~\".*status.*\"}[1m]))" } ]
+    },
+
+    { "type": "row", "title": "Worker / Redis / DB / Dead Letter", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 } },
+
+    {
+      "type": "timeseries", "title": "Worker 저장 성공/실패",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 41 },
+      "description": "TODO(custom metric): nowait_worker_persist_success_total / failure_total 계측 필요.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "성공", "expr": "sum(rate(nowait_worker_persist_success_total[5m]))" }, { "refId": "B", "legendFormat": "실패", "expr": "sum(rate(nowait_worker_persist_failure_total[5m]))" } ]
+    },
+    {
+      "type": "timeseries", "title": "Worker 저장 지연시간 p95",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 41 },
+      "description": "Redis→DB 비동기 저장 지연. TODO(custom metric): nowait_worker_persist_lag_seconds (histogram).",
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 30 } ] } } },
+      "targets": [ { "refId": "A", "legendFormat": "p95 지연", "expr": "histogram_quantile(0.95, sum(rate(nowait_worker_persist_lag_seconds_bucket[5m])) by (le))" } ]
+    },
+    {
+      "type": "timeseries", "title": "DB 커넥션 대기 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 41 },
+      "description": "HikariCP pending 커넥션 + 타임아웃. 풀 포화 신호 (실데이터).",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{job}} pending", "expr": "sum(hikaricp_connections_pending{namespace=\"$namespace\"}) by (job)" }, { "refId": "B", "legendFormat": "{{job}} timeout/s", "expr": "sum(rate(hikaricp_connections_timeout_total{namespace=\"$namespace\"}[5m])) by (job)" } ]
+    },
+    {
+      "type": "stat", "title": "Dead Letter 현재 적재 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 4, "x": 0, "y": 48 },
+      "description": "재시도 소진된 비동기 작업 격리 큐(waiting:dead-letter LLEN). 0 초과 = 영속화 실패 누적. 실데이터(waiting_queue_deadletter).",
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "max(waiting_queue_deadletter)" } ]
+    },
+    {
+      "type": "timeseries", "title": "Dead Letter 유입량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 4, "y": 48 },
+      "description": "TODO(custom metric): nowait_worker_dlq_in_total. 지속 증가 시 P0.",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [ { "refId": "A", "legendFormat": "DLQ 유입/s", "expr": "sum(rate(nowait_worker_dlq_in_total[5m]))" } ]
+    },
+    {
+      "type": "timeseries", "title": "Redis 메모리 사용률",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 48 },
+      "description": "redis_exporter(ElastiCache team6-nowait-dev-redis 연동) 실데이터. used/max.",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 0.75 }, { "color": "red", "value": 0.9 } ] } } },
+      "targets": [ { "refId": "A", "legendFormat": "사용률", "expr": "redis_memory_used_bytes / clamp_min(redis_memory_max_bytes, 1)" } ]
+    },
+    {
+      "type": "stat", "title": "Redis Eviction 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 48 },
+      "description": "Eviction > 0 = 데이터 유실 위험(Redis가 실시간 상태 원천). redis_exporter(ElastiCache 연동) 실데이터.",
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(increase(redis_evicted_keys_total[5m]))" } ]
+    },
+
+    { "type": "row", "title": "Kubernetes / 오토스케일링 / 배포 상태", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 } },
+
+    {
+      "type": "timeseries", "title": "Deployment 가용 Replica",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 56 },
+      "description": "available < desired = 용량 저하 (실데이터).",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{deployment}} available", "expr": "kube_deployment_status_replicas_available{namespace=\"$namespace\",deployment=~\"nowait-.*\"}" }, { "refId": "B", "legendFormat": "{{deployment}} desired", "expr": "kube_deployment_spec_replicas{namespace=\"$namespace\",deployment=~\"nowait-.*\"}" } ]
+    },
+    {
+      "type": "timeseries", "title": "HPA 현재/목표 Replica",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 56 },
+      "description": "스케일링은 그 자체로 장애 아님. Pending Pod/지연/에러와 함께 볼 때 의미 (실데이터).",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{horizontalpodautoscaler}} current", "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"$namespace\"}" }, { "refId": "B", "legendFormat": "{{horizontalpodautoscaler}} desired", "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"$namespace\"}" } ]
+    },
+    {
+      "type": "timeseries", "title": "노드 수 / Karpenter NodeClaim 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 56 },
+      "description": "전체 노드 수(kube_node_info)와 Karpenter 관리 노드 수(karpenter_cluster_state_node_count) — 둘 다 실데이터.",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "전체 노드 수", "expr": "count(kube_node_info)" }, { "refId": "B", "legendFormat": "Karpenter 관리 노드", "expr": "karpenter_cluster_state_node_count" } ]
+    },
+    {
+      "type": "timeseries", "title": "Pod 재시작 수",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 63 },
+      "description": "CrashLoop/불안정 신호 (실데이터). 15분 증가율.",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{pod}}", "expr": "sum(rate(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[15m])) by (pod) > 0" } ]
+    },
+    {
+      "type": "timeseries", "title": "컨테이너 CPU 사용량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 63 },
+      "description": "근본 원인 보조 지표 (주 SLI 아님).",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{pod}}", "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\"}[5m])) by (pod)" } ]
+    },
+    {
+      "type": "timeseries", "title": "컨테이너 메모리 사용량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 63 },
+      "description": "근본 원인 보조 지표 (OOM 신호).",
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [ { "refId": "A", "legendFormat": "{{pod}}", "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\"}) by (pod)" } ]
+    }
+  ]
+}
