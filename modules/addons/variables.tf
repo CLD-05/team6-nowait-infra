@@ -233,3 +233,12 @@ variable "argocd_values_file" {
   type        = string
   default     = null
 }
+
+# -------------------------------------------------------------------
+# Alertmanager Slack Webhook 생성 여부 스위치
+# -------------------------------------------------------------------
+variable "enable_alertmanager_webhook" {
+  description = "Whether to create AWS Secrets Manager for Alertmanager Slack Webhook"
+  type        = bool
+  default     = false
+}

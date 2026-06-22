@@ -153,5 +153,6 @@ output "cluster_secret_store_name" {
 # -------------------------------------------------------------------
 output "alertmanager_webhook_secret_arn" {
   description = "Alertmanager Slack Webhook AWS Secrets Manager ARN"
-  value       = aws_secretsmanager_secret.alertmanager_webhook.arn
+  # 방이 켜졌을 때만(1개일 때만) 0번째 방의 arn을 내보내고, 꺼졌으면 null을 반환
+  value = var.enable_alertmanager_webhook ? aws_secretsmanager_secret.alertmanager_webhook[0].arn : null
 }
