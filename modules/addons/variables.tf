@@ -207,8 +207,29 @@ variable "karpenter_values_file" {
   default     = null
 }
 
-variable "nowait_dashboard_json_file" {
-  description = "Path to the NoWait custom Grafana dashboard JSON file"
+variable "nowait_core_dashboard_json_file" {
+  description = "Path to the NoWait core-ops Grafana dashboard JSON file (NoWait 핵심 운영 대시보드)"
+  type        = string
+  default     = null
+}
+
+# -------------------------------------------------------------------
+# Redis exporter (ElastiCache 메트릭 스크랩용)
+# -------------------------------------------------------------------
+variable "enable_redis_exporter" {
+  description = "Whether to deploy redis_exporter for ElastiCache metrics"
+  type        = bool
+  default     = false
+}
+
+variable "redis_exporter_image" {
+  description = "redis_exporter container image"
+  type        = string
+  default     = "oliver006/redis_exporter:v1.62.0"
+}
+
+variable "redis_exporter_redis_address" {
+  description = "Target Redis/ElastiCache address for redis_exporter (e.g. redis://host:6379)"
   type        = string
   default     = null
 }

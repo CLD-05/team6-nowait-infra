@@ -23,7 +23,7 @@ module "addons" {
   # Argo CD
   enable_argocd        = var.enable_argocd
   argocd_chart_version = var.argocd_chart_version
-  argocd_values_file   = var.argocd_values_file
+  argocd_values_file   = "${path.module}/helm-values/argocd-values.yaml"
 
   # External Secrets Operator Pod Identity
   enable_eso_pod_identity      = var.enable_eso_pod_identity
@@ -49,5 +49,9 @@ module "addons" {
   enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
   kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version
   kube_prometheus_stack_values_file   = "${path.module}/helm-values/kube-prometheus-stack-values.yaml"
-  nowait_dashboard_json_file          = "${path.module}/dashboards/nowait-overview.json"
+  nowait_core_dashboard_json_file     = "${path.module}/dashboards/nowait-core-ops.json"
+
+  # redis_exporter (ElastiCache 메트릭)
+  enable_redis_exporter        = var.enable_redis_exporter
+  redis_exporter_redis_address = var.redis_exporter_redis_address
 }
