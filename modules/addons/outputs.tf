@@ -147,3 +147,11 @@ output "cluster_secret_store_name" {
   description = "ClusterSecretStore name for External Secrets"
   value       = var.enable_eso_pod_identity ? kubernetes_manifest.cluster_secret_store[0].manifest.metadata.name : null
 }
+
+# -------------------------------------------------------------------
+# Alertmanager Slack Webhook
+# -------------------------------------------------------------------
+output "alertmanager_webhook_secret_arn" {
+  description = "Alertmanager Slack Webhook AWS Secrets Manager ARN"
+  value       = aws_secretsmanager_secret.alertmanager_webhook.arn
+}
