@@ -697,11 +697,13 @@ resource "helm_release" "kube_prometheus_stack" {
 }
 
 # -------------------------------------------------------------------
-# [통합형] 모든 알림을 한곳으로 모으는 공용 알람매니저 슬랙 웹훅 방
+# [호출형] Alertmanager 슬랙 웹훅용 AWS Secrets Manager 방 생성
 # -------------------------------------------------------------------
 resource "aws_secretsmanager_secret" "alertmanager_webhook" {
+  count = var.enable_alertmanager_webhook ? 1 : 0
+
   name        = "${var.name_prefix}-alertmanager-slack-webhook"
-  description = "Prometheus Alertmanager Slack Webhook URL for All Infrastructure Alerts"
+  description = "Prometheus Alertmanager Slack Webhook URL"
 
   tags = {
     Name = "${var.name_prefix}-alertmanager-slack-webhook"
