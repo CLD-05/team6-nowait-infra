@@ -54,3 +54,8 @@ variable "route53_zone_id" {
   type        = string
   default     = null
 }
+
+variable "alb_dns_name" {
+  type        = string
+  description = "Application Load Balancer의 DNS 주소"
+}

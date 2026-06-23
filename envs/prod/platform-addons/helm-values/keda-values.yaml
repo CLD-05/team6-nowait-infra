@@ -2,7 +2,7 @@ metricsServer:
   enabled: true
 
 operator:
-  replicaCount: 1
+  replicaCount: 2
 
 webhooks:
   enabled: true
