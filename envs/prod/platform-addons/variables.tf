@@ -118,7 +118,7 @@ variable "nowait_api_namespace" {
 variable "nowait_api_service_account" {
   description = "Kubernetes ServiceAccount name for NoWait API"
   type        = string
-  default     = "nowait-api"
+  default     = "nowait-api-sa"
 }
 
 variable "image_bucket_arn" {
