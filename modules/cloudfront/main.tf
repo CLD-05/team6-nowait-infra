@@ -26,7 +26,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   price_class         = var.price_class
 
-  aliases = ["nowait.singleuser.cloud"]
+  aliases = var.acm_virginia_certificate_arn != null ? ["nowait.singleuser.cloud"] : []
 
   # ----------------------------------------
   # Origin: S3 Frontend Bucket 단독 연결
