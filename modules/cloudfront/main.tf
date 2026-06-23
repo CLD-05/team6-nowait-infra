@@ -37,6 +37,21 @@ resource "aws_cloudfront_distribution" "this" {
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend[0].id
   }
 
+  # 🚀 [추가 코딩] Origin 2: 백엔드 ALB 연결 통로 개통
+  origin {
+    domain_name = var.alb_dns_name # 🎯 변수 처리된 프로드 ALB DNS 주소
+    origin_id   = "ALB-${var.name_prefix}-backend"
+
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_protocol_policy   = "http-only" # EKS 내부 통신 규격에 맞춤
+      origin_ssl_protocols     = ["TLSv1.2"]
+      origin_read_timeout      = 60 # 💡 SSE 연결 유지를 위한 읽기 타임아웃
+      origin_keepalive_timeout = 60 # 💡 SSE 연결 유지를 위한 킵얼라이브 타임아웃
+    }
+  }
+
   # ----------------------------------------
   # Default Cache Behavior
   # S3 정적 파일 (React 빌드 결과물)
@@ -59,6 +74,23 @@ resource "aws_cloudfront_distribution" "this" {
     min_ttl     = 0
     default_ttl = 86400
     max_ttl     = 31536000
+  }
+
+  # 🚀 [추가 코딩] Ordered Cache Behavior: 백엔드 API 및 SSE 전용 라우팅 규칙
+  # /api/ 경로로 들어오는 모든 요청은 캐시를 완전히 끄고 버퍼링을 우회하여 ALB로 직송합니다.
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    target_origin_id = "ALB-${var.name_prefix}-backend"
+
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    viewer_protocol_policy = "redirect-to-https"
+
+    # 🚨 SSE 웨이팅 세션을 위한 핵심 보안 및 버퍼링 차단 설정
+    # Managed-CachingDisabled ID를 주입하여 CloudFront의 응답 버퍼링을 끕니다.
+    cache_policy_id = "4135ea2d-6df8-44e3-9d1e-634a47275f60"
+    # Managed-AllViewerExceptHostHeader ID를 주입하여 인증 헤더와 쿠키를 ALB로 패스합니다.
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-688838d29481"
   }
 
   # ----------------------------------------
