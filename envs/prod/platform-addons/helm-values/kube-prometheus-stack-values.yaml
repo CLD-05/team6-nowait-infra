@@ -126,6 +126,7 @@ alertmanager:
     
     # [이식 완료] 금고에서 주소를 읽어와서 우리만의 예쁜 템플릿으로 발송
     receivers:
+    - name: 'null'
     - name: 'nowait-prod-alert'
       slack_configs:
       - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url

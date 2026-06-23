@@ -204,9 +204,7 @@ module "cloudfront" {
 
   frontend_bucket_domain_name = module.s3.frontend_bucket_domain_name
 
-  # ❌ 기존 코드: acm_virginia_certificate_arn = module.acm.virginia_certificate_arn
-  # 🎯 수정 코드: 참조를 지우고 실제 버지니아 ACM 인증서 ARN 문자열을 큰따옴표 안에 직접 박아줍니다.
-  acm_virginia_certificate_arn = "arn:aws:acm:us-east-1:194722398200:certificate/84d4e85f-24bb-4be1-bcaf-cb633c05025c"
+  acm_virginia_certificate_arn = module.acm.virginia_certificate_arn
   
   route53_zone_id              = module.route53.zone_id
 }
