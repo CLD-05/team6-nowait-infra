@@ -39,7 +39,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   # 🚀 [추가 코딩] Origin 2: 백엔드 ALB 연결 통로 개통
   origin {
-    domain_name = var.alb_dns_name # 🎯 변수 처리된 프로드 ALB DNS 주소
+    domain_name = var.backend_domain_name
     origin_id   = "ALB-${var.name_prefix}-backend"
 
     custom_origin_config {

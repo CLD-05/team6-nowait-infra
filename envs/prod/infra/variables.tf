@@ -391,4 +391,3 @@ variable "api_subdomain" {
   type        = string
   default     = "api"
 }
-

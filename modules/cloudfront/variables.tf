@@ -55,7 +55,8 @@ variable "route53_zone_id" {
   default     = null
 }
 
-variable "alb_dns_name" {
+variable "backend_domain_name" {
   type        = string
-  description = "Application Load Balancer의 DNS 주소"
+  description = "팀원이 고도화한 백엔드 서브도메인 주소 (api.nowait.singleuser.cloud)"
+  default     = "api.nowait.singleuser.cloud" # 💡 디폴트값을 주면 상위 배포가 편해집니다!
 }
