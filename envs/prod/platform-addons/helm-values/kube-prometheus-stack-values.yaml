@@ -87,6 +87,14 @@ grafana:
         authType: default
         defaultRegion: ap-northeast-2
 
+        # 💡 [여기에 추가!] 쿠버네티스 ConfigMap에 등록된 대시보드 파일을 자동으로 감지해서 로딩
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+
 # -------------------------------------------------------------------------
 # 3. 알람매니저 비상벨 및 쿠버네티스 금고 연동 설정
 # -------------------------------------------------------------------------

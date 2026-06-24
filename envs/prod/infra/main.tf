@@ -205,8 +205,9 @@ module "cloudfront" {
   frontend_bucket_domain_name = module.s3.frontend_bucket_domain_name
 
   acm_virginia_certificate_arn = module.acm.virginia_certificate_arn
-  
-  route53_zone_id              = module.route53.zone_id
+
+  route53_zone_id = module.route53.zone_id
+
 }
 
 # ========================================

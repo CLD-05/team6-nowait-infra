@@ -54,3 +54,9 @@ variable "route53_zone_id" {
   type        = string
   default     = null
 }
+
+variable "backend_domain_name" {
+  type        = string
+  description = "팀원이 고도화한 백엔드 서브도메인 주소 (api.nowait.singleuser.cloud)"
+  default     = "api.nowait.singleuser.cloud" # 💡 디폴트값을 주면 상위 배포가 편해집니다!
+}
