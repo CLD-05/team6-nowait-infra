@@ -95,6 +95,6 @@ kube_prometheus_stack_chart_version = "85.3.3"
 enable_nowait_api_pod_identity = true
 
 nowait_api_namespace       = "nowait-prod"
-nowait_api_service_account = "nowait-api"
+nowait_api_service_account = "nowait-api-sa"
 
 image_bucket_arn = "<PROD_IMAGE_BUCKET_ARN>"
