@@ -11,6 +11,16 @@ kubeProxy:
   enabled: false
 
 # =========================================================================
+# request/limit 합산 기준 overcommit 알림 그룹 비활성화
+# =========================================================================
+# 교육용 단일 EKS 클러스터는 kube_node_role(control-plane)이 잡히지 않아
+# KubeCPUOvercommit이 거의 항상 non-HA 분기로 평가되어, 실사용률(kubectl top nodes 1~4%)과
+# 무관하게 상시 발동한다. 실사용률 기반 경고는 nowait-alert-rules의 HighCpuUsage(80%)가 대체.
+defaultRules:
+  rules:
+    kubernetesResources: false
+
+# =========================================================================
 # [NoWait 프로젝트] 프로메테우스 & 그라파나 & 알람매니저 통합 인프라 설정 파일
 # 경로: envs/prod/platform-addons/helm-values/kube-prometheus-stack-values.yaml
 # =========================================================================

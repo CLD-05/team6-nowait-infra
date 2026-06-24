@@ -88,9 +88,9 @@ resource "aws_cloudfront_distribution" "this" {
 
     # 🚨 SSE 웨이팅 세션을 위한 핵심 보안 및 버퍼링 차단 설정
     # Managed-CachingDisabled ID를 주입하여 CloudFront의 응답 버퍼링을 끕니다.
-    cache_policy_id = "4135ea2d-6df8-44e3-9d1e-634a47275f60"
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     # Managed-AllViewerExceptHostHeader ID를 주입하여 인증 헤더와 쿠키를 ALB로 패스합니다.
-    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-688838d29481"
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
   }
 
   # ----------------------------------------
