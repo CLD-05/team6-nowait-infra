@@ -97,4 +97,8 @@ resource "aws_instance" "this" {
     aws_iam_role_policy_attachment.ssm,
     aws_iam_role_policy.eks_describe,
   ]
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }

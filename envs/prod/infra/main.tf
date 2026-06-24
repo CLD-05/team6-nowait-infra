@@ -199,11 +199,14 @@ module "cloudfront" {
 
   name_prefix        = var.name_prefix
   common_tags        = local.default_tags
-  cloudfront_enabled = var.cloudfront_enabled # prod 환경에서는 true로 주입.
+  cloudfront_enabled = var.cloudfront_enabled
   price_class        = var.price_class
 
-  # S3 모듈에서 생성된 프론트엔드 버킷의 도메인 주소를 가져와 오리진으로 설정.
   frontend_bucket_domain_name = module.s3.frontend_bucket_domain_name
+
+  acm_virginia_certificate_arn = module.acm.virginia_certificate_arn
+  
+  route53_zone_id              = module.route53.zone_id
 }
 
 # ========================================
@@ -305,15 +308,22 @@ module "acm" {
 # 일단 placeholder로 빈 alias 등록은 불가하므로, ALB 생성 후에 manual 또는
 # 후속 PR로 활성화 예정.
 # ========================================
-# resource "aws_route53_record" "api" {
-#   zone_id = module.route53.zone_id
-#   name    = "${var.api_subdomain}.${var.root_domain}"
-#   type    = "A"
-#
-#   alias {
-#     name                   = "<TODO: ALB DNS from Load Balancer Controller>"
-#     zone_id                = "<TODO: ALB hosted zone>"
-#     evaluate_target_health = true
-#   }
-# }
+resource "aws_route53_record" "api" {
+  zone_id = module.route53.zone_id
+  name    = "${var.api_subdomain}.${var.root_domain}"
+  type    = "A"
 
+  alias {
+    name                   = "k8s-nowaitpr-nowaitap-09ac3c314c-2117858723.ap-northeast-2.elb.amazonaws.com"
+    zone_id                = "ZWKZPGTI48KDX"
+    evaluate_target_health = true
+  }
+}
+
+# ========================================
+# Addons & Monitoring
+# 
+# 용도:
+# - KEDA, Karpenter, 프로메테우스 얼럿매니저 연동 인프라
+# - 독립 자원으로 선언된 Alertmanager Slack Webhook Secrets Manager 생성
+# ========================================

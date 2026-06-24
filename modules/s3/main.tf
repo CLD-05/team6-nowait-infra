@@ -122,7 +122,8 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 # cloudfront_distribution_arn은 modules/cloudfront에서 넘겨받습니다.
 resource "aws_s3_bucket_policy" "frontend" {
   # ARN 값 대신, CloudFront를 켜고 끄는 변수(cloudfront_enabled)를 조건으로 바라보게 합니다!
-  count = var.frontend_bucket_enabled && var.cloudfront_enabled ? 1 : 0
+  # count = var.frontend_bucket_enabled && var.cloudfront_enabled ? 1 : 0
+  count = 0
 
   bucket = aws_s3_bucket.frontend[0].id
 
