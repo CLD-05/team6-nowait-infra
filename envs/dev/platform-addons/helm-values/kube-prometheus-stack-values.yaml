@@ -13,7 +13,12 @@ prometheus:
 grafana:
   replicas: 1
   persistence:
-    enabled: false
+    enabled: true
+    type: pvc
+    storageClassName: gp3
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
   resources:
     requests:
       cpu: 100m
