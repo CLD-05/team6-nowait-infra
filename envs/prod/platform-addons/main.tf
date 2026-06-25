@@ -23,7 +23,7 @@ module "addons" {
   # Argo CD
   enable_argocd        = var.enable_argocd
   argocd_chart_version = var.argocd_chart_version
-  argocd_values_file   = var.argocd_values_file
+  argocd_values_file   = "${path.module}/helm-values/argocd-values.yaml"
 
   # External Secrets Operator Pod Identity
   enable_eso_pod_identity      = var.enable_eso_pod_identity
