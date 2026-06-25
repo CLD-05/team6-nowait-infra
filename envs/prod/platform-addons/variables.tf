@@ -182,6 +182,21 @@ variable "kube_prometheus_stack_values_file" {
 }
 
 # ========================================
+# Redis Exporter
+# ========================================
+variable "enable_redis_exporter" {
+  description = "Deploy redis_exporter for ElastiCache metrics"
+  type        = bool
+  default     = true
+}
+
+variable "redis_exporter_redis_address" {
+  description = "ElastiCache address for redis_exporter"
+  type        = string
+  default     = "rediss://master.team6-nowait-prod-redis.50cal1.apn2.cache.amazonaws.com:6379"
+}
+
+# ========================================
 # Argo CD
 # ========================================
 variable "enable_argocd" {
