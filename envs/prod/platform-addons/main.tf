@@ -45,6 +45,13 @@ module "addons" {
   karpenter_chart_version = var.karpenter_chart_version
   karpenter_values_file   = "${path.module}/helm-values/karpenter-values.yaml"
 
+  # Redis Exporter (ElastiCache 메트릭)
+  enable_redis_exporter                = var.enable_redis_exporter
+  redis_exporter_redis_address         = var.redis_exporter_redis_address
+  redis_exporter_namespace             = "nowait-prod"
+  redis_exporter_password_secret_name  = "nowait-api-secret"
+  redis_exporter_tls_skip_verify       = true
+
   # Monitoring
   enable_kube_prometheus_stack        = var.enable_kube_prometheus_stack
   kube_prometheus_stack_chart_version = var.kube_prometheus_stack_chart_version

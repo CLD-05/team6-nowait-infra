@@ -234,6 +234,30 @@ variable "redis_exporter_redis_address" {
   default     = null
 }
 
+variable "redis_exporter_namespace" {
+  description = "Kubernetes namespace to deploy redis_exporter"
+  type        = string
+  default     = "monitoring"
+}
+
+variable "redis_exporter_password_secret_name" {
+  description = "Secret name containing REDIS_PASSWORD (must be in redis_exporter_namespace)"
+  type        = string
+  default     = null
+}
+
+variable "redis_exporter_password_secret_key" {
+  description = "Key inside the secret for Redis password"
+  type        = string
+  default     = "REDIS_PASSWORD"
+}
+
+variable "redis_exporter_tls_skip_verify" {
+  description = "Skip TLS certificate verification for Redis connection (needed for ElastiCache TLS)"
+  type        = bool
+  default     = false
+}
+
 # ========================================
 # Argo CD
 # ========================================

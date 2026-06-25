@@ -20,7 +20,7 @@ resource "kubernetes_deployment" "redis_exporter" {
 
   metadata {
     name      = "redis-exporter"
-    namespace = "monitoring"
+    namespace = var.redis_exporter_namespace
     labels    = local.redis_exporter_labels
   }
 
@@ -47,6 +47,27 @@ resource "kubernetes_deployment" "redis_exporter" {
           port {
             name           = "redis-metrics"
             container_port = 9121
+          }
+
+          dynamic "env" {
+            for_each = var.redis_exporter_password_secret_name != null ? [1] : []
+            content {
+              name = "REDIS_PASSWORD"
+              value_from {
+                secret_key_ref {
+                  name = var.redis_exporter_password_secret_name
+                  key  = var.redis_exporter_password_secret_key
+                }
+              }
+            }
+          }
+
+          dynamic "env" {
+            for_each = var.redis_exporter_tls_skip_verify ? [1] : []
+            content {
+              name  = "REDIS_EXPORTER_TLS_CLIENT_INSECURE_SKIP_VERIFY"
+              value = "true"
+            }
           }
 
           resources {
@@ -84,7 +105,7 @@ resource "kubernetes_service" "redis_exporter" {
 
   metadata {
     name      = "redis-exporter"
-    namespace = "monitoring"
+    namespace = var.redis_exporter_namespace
     labels    = local.redis_exporter_labels
   }
 
@@ -114,7 +135,7 @@ resource "kubernetes_manifest" "redis_exporter_servicemonitor" {
     kind       = "ServiceMonitor"
     metadata = {
       name      = "redis-exporter"
-      namespace = "monitoring"
+      namespace = var.redis_exporter_namespace
       labels = {
         app     = "redis-exporter"
         team    = var.team
@@ -128,7 +149,7 @@ resource "kubernetes_manifest" "redis_exporter_servicemonitor" {
         }
       }
       namespaceSelector = {
-        matchNames = ["monitoring"]
+        matchNames = [var.redis_exporter_namespace]
       }
       endpoints = [
         {
