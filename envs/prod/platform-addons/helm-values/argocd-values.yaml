@@ -1,0 +1,42 @@
+# -------------------------------------------------------------------
+# ArgoCD 메트릭을 kube-prometheus-stack Prometheus가 스크랩하도록 ServiceMonitor를 켠다.
+#
+# Prometheus는 serviceMonitorSelectorNilUsesHelmValues=true(차트 기본값)라
+# release: kube-prometheus-stack 라벨이 붙은 ServiceMonitor만 자동으로 찾는다
+# (nowait-api/worker ServiceMonitor와 동일한 패턴).
+#
+# application controller만 켜면 argocd_app_info{sync_status=,health_status=}
+# 메트릭이 나와서 "최근 배포가 OutOfSync/Degraded인지" 대시보드에서 바로 확인 가능.
+# server/repo-server는 API 요청량·repo 처리 지표라 부가 정보 — 같이 켜둔다.
+# -------------------------------------------------------------------
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
+
+server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
+
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
+
+applicationSet:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
