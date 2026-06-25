@@ -30,6 +30,7 @@ defaultRules:
 # -------------------------------------------------------------------------
 prometheus:
   prometheusSpec:
+    enableRemoteWriteReceiver: true
     replicas: 1
     retention: 1d
     resources:
