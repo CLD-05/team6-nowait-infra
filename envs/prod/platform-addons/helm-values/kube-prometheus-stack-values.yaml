@@ -315,7 +315,8 @@ additionalPrometheusRulesMap:
               service: nowait-api
             annotations:
               summary: "[⚠️ P1 주요 경고] API p95 응답시간 지연"
-              description: "서비스: nowait-api / 조건: p95 응답시간 > 1초 (5분 지속) / 현재값: {{ $value | printf "%.2f" }}초"
+              description: |
+                서비스: nowait-api / 조건: p95 응답시간 > 1초 (5분 지속) / 현재값: {{ $value | printf "%.2f" }}초
 
           - alert: Worker저장지연증가
             expr: |
@@ -326,7 +327,8 @@ additionalPrometheusRulesMap:
               service: nowait-worker
             annotations:
               summary: "[⚠️ P1 주요 경고] Worker 저장 지연 증가"
-              description: "서비스: nowait-worker / 조건: Redis->DB 영속화 지연 p95 > 5초 / 현재값: {{ $value | printf "%.2f" }}초"
+              description: |
+                서비스: nowait-worker / 조건: Redis->DB 영속화 지연 p95 > 5초 / 현재값: {{ $value | printf "%.2f" }}초
 
           - alert: Worker저장실패증가
             expr: |
@@ -350,7 +352,8 @@ additionalPrometheusRulesMap:
               service: nowait-worker
             annotations:
               summary: "[⚠️ P1 주요 경고] Dead Letter 발생"
-              description: "서비스: nowait-worker / 조건: 격리 큐 적재 건수 > 0 / 현재값: {{ $value | printf "%.0f" }}건"
+              description: |
+                서비스: nowait-worker / 조건: 격리 큐 적재 건수 > 0 / 현재값: {{ $value | printf "%.0f" }}건
 
           - alert: DB커넥션대기발생
             expr: sum(hikaricp_connections_pending{namespace="nowait-prod"}) > 0
