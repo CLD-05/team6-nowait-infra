@@ -64,3 +64,82 @@ module "github_oidc_role_prod" {
 
   common_tags = local.default_tags
 }
+
+# ========================================
+# Prod Frontend Deploy Policy (S3 sync + CloudFront invalidation)
+# ========================================
+# frontend-prod-deploy.yml 이 prod GitHub OIDC role 로 실행하는
+#   - aws s3 sync frontend/dist s3://<bucket> --delete
+#   - aws cloudfront create-invalidation --distribution-id <id> --paths "/*"
+# 에 필요한 최소 권한을 prod role 에 추가한다.
+# 변수가 비어 있으면 정책을 만들지 않으므로(count=0) 기존 동작에 영향 없음.
+
+locals {
+  enable_prod_frontend_deploy = var.prod_frontend_bucket_name != "" && var.prod_cloudfront_distribution_id != ""
+
+  prod_frontend_bucket_arn = "arn:aws:s3:::${var.prod_frontend_bucket_name}"
+  prod_cloudfront_arn      = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${var.prod_cloudfront_distribution_id}"
+}
+
+data "aws_iam_policy_document" "prod_frontend_deploy" {
+  count = local.enable_prod_frontend_deploy ? 1 : 0
+
+  # 정적 파일 업로드/교체/삭제 (sync --delete)
+  statement {
+    sid    = "AllowFrontendObjectWrite"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:GetObject"
+    ]
+
+    resources = ["${local.prod_frontend_bucket_arn}/*"]
+  }
+
+  # sync 시 기존 객체 목록 비교(--delete) 에 필요
+  statement {
+    sid    = "AllowFrontendBucketList"
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ]
+
+    resources = [local.prod_frontend_bucket_arn]
+  }
+
+  # 배포 후 CloudFront 캐시 무효화
+  statement {
+    sid    = "AllowCloudFrontInvalidation"
+    effect = "Allow"
+
+    actions = [
+      "cloudfront:CreateInvalidation",
+      "cloudfront:GetInvalidation"
+    ]
+
+    resources = [local.prod_cloudfront_arn]
+  }
+}
+
+resource "aws_iam_policy" "prod_frontend_deploy" {
+  count = local.enable_prod_frontend_deploy ? 1 : 0
+
+  name   = "${var.name_prefix}-prod-github-actions-frontend-deploy-policy"
+  policy = data.aws_iam_policy_document.prod_frontend_deploy[0].json
+
+  tags = merge(local.default_tags, {
+    Name       = "${var.name_prefix}-prod-github-actions-frontend-deploy-policy"
+    DeployRole = "prod"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "prod_frontend_deploy" {
+  count = local.enable_prod_frontend_deploy ? 1 : 0
+
+  role       = module.github_oidc_role_prod.role_name
+  policy_arn = aws_iam_policy.prod_frontend_deploy[0].arn
+}

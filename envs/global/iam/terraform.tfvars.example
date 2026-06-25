@@ -21,3 +21,16 @@ github_repo = "team6-nowait-app"
 ecr_repository_arn = "ecr레포지토리ARN"
 
 iam_role_permissions_boundary = "arn:aws:iam::194722398200:policy/TeamRuntimeBoundary"
+
+# ========================================
+# Prod Frontend Deploy (S3 + CloudFront)
+# ========================================
+# frontend-prod-deploy.yml 이 prod role 로 s3 sync + CloudFront 무효화를 하므로
+# prod role 에 해당 권한을 붙인다. 두 값이 모두 채워졌을 때만 정책이 생성된다.
+#
+# 확인 방법:
+#   aws s3api list-buckets --query "Buckets[?contains(Name,'frontend')].Name" --profile final
+#   aws cloudfront list-distributions \
+#     --query "DistributionList.Items[?contains(Origins.Items[0].DomainName,'frontend')].Id" --profile final
+prod_frontend_bucket_name       = "team6-nowait-prod-frontend-194722398200"
+prod_cloudfront_distribution_id = "E15S7A5BISZTN7"
