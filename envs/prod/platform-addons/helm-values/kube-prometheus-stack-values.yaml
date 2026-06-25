@@ -26,7 +26,7 @@ defaultRules:
 # =========================================================================
 
 # -------------------------------------------------------------------------
-# 1. 프로메테우스 기지국 및 알람 규칙 설정
+# 1. 프로메테우스 기지국 및 리소스 설정
 # -------------------------------------------------------------------------
 prometheus:
   prometheusSpec:
@@ -39,39 +39,6 @@ prometheus:
       limits:
         cpu: 1000m
         memory: 2Gi
-
-# [이식 완료] 우리가 만든 정밀 에러 감지 사이렌 규칙
-additionalPrometheusRulesMap:
-  nowait-alert-rules:
-    groups:
-    - name: nowait-core-rules
-      rules:
-      - alert: InstanceDown
-        expr: up == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "🚨 [NoWait 비상] 서버 기지국 다운!"
-          description: "현재 컴퓨터 주소 {{ $labels.instance }} 가 1분 이상 응답하지 않습니다. 즉시 확인이 필요합니다."
-
-      - alert: HighCpuUsage
-        expr: sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (node) / sum(rate(node_cpu_seconds_total[5m])) by (node) * 100 > 80
-        for: 1m
-        labels:
-          severity: warning
-        annotations:
-          summary: "⚠️ [NoWait 경고] EC2 CPU 과부하 (80% 돌파)"
-          description: "가상 컴퓨터 {{ $labels.node }} 의 CPU 사용량이 5분 동안 80%를 초과했습니다."
-
-      - alert: Http5xxRateHigh
-        expr: sum(rate(http_server_requests_seconds_count{status=~"5.*"}[1m])) / sum(rate(http_server_requests_seconds_count[1m])) * 100 > 5
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "🔥 [NoWait 심각] 스프링 부트 500 에러 발생률 급증!"
-          description: "최근 1분간 백엔드 API 에러율이 5%를 초과했습니다. DB 커넥션이나 코드 예외를 확인하세요."
 
 # -------------------------------------------------------------------------
 # 2. 그라파나 대시보드 화면 및 AWS 연동 설정
@@ -96,9 +63,9 @@ grafana:
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/healthcheck-path: /api/health
       alb.ingress.kubernetes.io/healthcheck-port: "3000"
-    hosts: []
-    path: /
-    pathType: Prefix
+  hosts: []
+  path: /
+  pathType: Prefix
   
   # AWS RDS(MySQL) 및 ElastiCache(Redis) 모니터링을 위한 CloudWatch 연동
   additionalDataSources:
@@ -109,7 +76,7 @@ grafana:
         authType: default
         defaultRegion: ap-northeast-2
 
-        # 💡 [여기에 추가!] 쿠버네티스 ConfigMap에 등록된 대시보드 파일을 자동으로 감지해서 로딩
+  # 쿠버네티스 ConfigMap에 등록된 대시보드 파일을 자동으로 감지해서 로딩
   sidecar:
     dashboards:
       enabled: true
@@ -118,7 +85,7 @@ grafana:
       searchNamespace: ALL
 
 # -------------------------------------------------------------------------
-# 3. 알람매니저 비상벨 및 쿠버네티스 금고 연동 설정
+# 3. 알람매니저 비상벨 및 라우팅/억제(Inhibit) 설정
 # -------------------------------------------------------------------------
 alertmanager:
   enabled: true
@@ -131,6 +98,8 @@ alertmanager:
       limits:
         cpu: 200m
         memory: 256Mi
+    
+    # PVC를 통한 영구 저장 장치 설정 (파드 재시작 시 알람 억제 상태 유실 방지)
     storage:
       volumeClaimTemplate:
         spec:
@@ -140,7 +109,7 @@ alertmanager:
             requests:
               storage: 1Gi
     
-    # [이식 완료] 팀원이 약속한 쿠버네티스 비밀 금고 이름 연동
+    # 비밀 금고(Secret) 이름을 연동하여 Slack Webhook 주소 보안 유지
     secrets:
       - alertmanager-slack-webhook
 
@@ -148,25 +117,263 @@ alertmanager:
     global:
       resolve_timeout: 5m
     route:
-      group_by: ['alertname']
-      group_wait: 10s
-      group_interval: 10s
-      repeat_interval: 1h
-      receiver: 'nowait-prod-alert'
+      receiver: "null"
+      group_by: ["alertname", "severity"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        # P0(Critical) 및 P1(Warning) 알람을 무조건 지정된 슬랙 알림 채널로 발송
+        - receiver: slack-notifications
+          matchers:
+            - severity =~ "warning|critical"
     
-    # [이식 완료] 금고에서 주소를 읽어와서 우리만의 예쁜 템플릿으로 발송
     receivers:
-    - name: 'null'
-    - name: 'nowait-prod-alert'
-      slack_configs:
-      - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
-        channel: '#nowait-prod-alert'
-        send_resolved: true
-        text: >-
-          {{ range .Alerts }}
-            *상황:* {{ .Annotations.summary }}
-            *상태:* {{ .Status | upper }}
-            *등급:* {{ .Labels.severity }}
-            *상세 내용:* {{ .Annotations.description }}
-            *발생 시각:* {{ .StartsAt.Local }}
-          {{ end }}
+      - name: "null"
+      - name: slack-notifications
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
+            channel: "#nowait-alerts" # 실무 통합 채널 이름 적용
+            send_resolved: true
+            title: "{{ .CommonAnnotations.summary }}"
+            text: |-
+              {{ range .Alerts }}
+              *상황:* {{ .Annotations.summary }}
+              *상태:* {{ .Status | upper }}
+              *등급:* {{ .Labels.severity }}
+              *상세 내용:* {{ .Annotations.description }}
+              *발생 시각:* {{ .StartsAt.Local }}
+              -------------------------------------
+              {{ end }}
+            
+    # 알람 피로도(Alarm Fatigue) 방지를 위한 정밀 경고 억제 규칙
+    inhibit_rules:
+      # 1. 동일 알람/네임스페이스에서 치명적 장애(Critical) 발생 시 자잘한 경고(Warning) 억제
+      - source_matchers: ["severity = critical"]
+        target_matchers: ["severity = warning"]
+        equal: ["alertname", "namespace"]
+      # 2. 동일 마이크로서비스단에서 Critical 발생 시 Warning 경고 숨김
+      - source_matchers: ["severity = critical"]
+        target_matchers: ["severity = warning"]
+        equal: ["service"]
+      # 3. [근본 원인] Redis Eviction 발생 시 종속된 워커 관련 경고들 일괄 음소거
+      - source_matchers: ['alertname = "RedisEviction발생"']
+        target_matchers: ['alertname =~ "Worker저장지연증가|Worker저장실패증가|DeadLetter발생"']
+      # 4. [근본 원인] api 서버 가용 복제본(Replica) 부족 시 하위 K8s 컴포넌트 경고 중복 차단
+      - source_matchers: ['alertname = "nowaitapi가용Replica부족"']
+        target_matchers: ['alertname =~ "PendingPod지속발생|Deployment가용Replica부족"']
+
+# ---------------- ---------------------------------------------------------
+# 4. NoWait 정밀 슬랙 알람 규칙 (P0 Critical / P1 Warning)
+# -------------------------------------------------------------------------
+additionalPrometheusRulesMap:
+  nowait-core-alerts:
+    groups:
+      # ============================ P0 긴급 장애 (Critical) ============================
+      - name: nowait-p0-critical
+        rules:
+          - alert: InstanceDown
+            expr: up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "🚨 [NoWait 비상] 서버 기지국 다운!"
+              description: "현재 컴퓨터 주소 {{ $labels.instance }} 가 1분 이상 응답하지 않습니다. 즉시 확인이 필요합니다."
+
+          - alert: 대기등록성공률급락
+            expr: |
+              (sum(rate(nowait_waiting_register_success_total[5m]))
+                / (sum(rate(nowait_waiting_register_success_total[5m])) + sum(rate(nowait_waiting_register_failure_total[5m])))) < 0.99
+              and
+              (sum(rate(nowait_waiting_register_success_total[5m])) + sum(rate(nowait_waiting_register_failure_total[5m]))) > 0
+            for: 5m
+            labels:
+              severity: critical
+              service: nowait-api
+            annotations:
+              summary: "[🔥 P0 긴급 장애] 대기 등록 성공률 급락"
+              description: |
+                서비스: nowait-api / 환경: dev
+                조건: 대기 등록 성공률 < 99% (5분 지속)
+                현재값: {{ $value | humanizePercentage }}
+                영향: 사용자가 대기 등록에 실패하고 있습니다.
+                우선 확인: 1. API 5xx 에러율 / 2. POST /waitings 응답시간 / 3. Redis 상태 / 4. Dead Letter 적체
+                대시보드: http://k8s-monitori-kubeprom-391f767428-2134982071.ap-northeast-2.elb.amazonaws.com/d/nowait-core-ops
+
+          - alert: API5xx에러율높음
+            expr: |
+              sum(rate(http_server_requests_seconds_count{job="nowait-api",status=~"5.."}[5m]))
+                / sum(rate(http_server_requests_seconds_count{job="nowait-api"}[5m])) > 0.05
+            for: 5m
+            labels:
+              severity: critical
+              service: nowait-api
+            annotations:
+              summary: "[🔥 P0 긴급 장애] API 5xx 에러율 높음"
+              description: |
+                서비스: nowait-api / 환경: dev
+                조건: 5xx 비율 > 5% (5분 지속)
+                현재값: {{ $value | humanizePercentage }}
+                영향: 다수 사용자 요청이 실패하고 있습니다. 내부 예외 로그 및 DB 커넥션 상태를 파악하세요.
+
+          - alert: APIp95응답시간심각
+            expr: |
+              histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job="nowait-api",uri!~"/actuator.*"}[5m])) by (le)) > 3
+            for: 5m
+            labels:
+              severity: critical
+              service: nowait-api
+            annotations:
+              summary: "[🔥 P0 긴급 장애] API p95 응답시간 심각"
+              description: |
+                서비스: nowait-api / 환경: dev
+                조건: p95 응답시간 > 3초 (5분 지속)
+                현재값: {{ $value | printf "%.2f" }}초
+                영향: 폴링 지연으로 인해 사용자 인터페이스 응답이 마비됩니다. 락(Lock) 병목을 확인하세요.
+
+          - alert: RedisEviction발생
+            expr: sum(increase(redis_evicted_keys_total[5m])) > 0
+            for: 0m
+            labels:
+              severity: critical
+              service: redis
+            annotations:
+              summary: "[🔥 P0 긴급 장애] Redis Eviction 발생"
+              description: |
+                서비스: ElastiCache(team6-nowait-dev-redis) / 환경: dev
+                조건: 최근 5분 Eviction 발생 (> 0)
+                현재값: {{ $value | printf "%.0f" }}건
+                영향: 실시간 대기 메모리 데이터가 유실되어 DB 영속화 전에 증발할 위험이 존재합니다.
+
+          - alert: DeadLetter지속증가
+            expr: sum(rate(nowait_worker_dlq_in_total[5m])) > 0
+            for: 10m
+            labels:
+              severity: critical
+              service: nowait-worker
+            annotations:
+              summary: "[🔥 P0 긴급 장애] Dead Letter 지속 증가"
+              description: |
+                서비스: nowait-worker / 환경: dev
+                조건: Dead Letter 유입이 10분간 지속
+                현재 유입율: {{ $value | printf "%.3f" }}/s
+                영향: 비동기 백엔드 워커가 MySQL 적재를 연속 실패하여 유실 위험 데이터가 격리 큐(waiting:dead-letter)로 이동 중입니다.
+
+          - alert: nowaitapi가용Replica부족
+            expr: |
+              kube_deployment_status_replicas_available{namespace="nowait-dev",deployment="nowait-api"}
+                < kube_deployment_spec_replicas{namespace="nowait-dev",deployment="nowait-api"}
+            for: 3m
+            labels:
+              severity: critical
+              service: nowait-api
+            annotations:
+              summary: "[🔥 P0 긴급 장애] nowait-api 가용 Replica 부족"
+              description: |
+                서비스: nowait-api / 환경: dev
+                조건: 가용 파드 수 < 배포 목표치 (3분 지속)
+                현재 가용: {{ $value | printf "%.0f" }}개
+                영향: 서빙 가능한 파드가 부족하여 가용성이 차단되었습니다. CrashLoop 상태인지 즉각 점검하세요.
+
+      # ============================ P1 주요 경고 (Warning) ============================
+      - name: nowait-p1-warning
+        rules:
+          - alert: HighCpuUsage
+            expr: sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (node) / sum(rate(node_cpu_seconds_total[5m])) by (node) * 100 > 80
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "⚠️ [NoWait 경고] EC2 CPU 과부하 (80% 돌파)"
+              description: "가상 컴퓨터 {{ $labels.node }} 의 CPU 사용량이 5분 동안 80%를 초과했습니다."
+
+          - alert: API5xx에러율증가
+            expr: |
+              sum(rate(http_server_requests_seconds_count{job="nowait-api",status=~"5.."}[5m]))
+                / sum(rate(http_server_requests_seconds_count{job="nowait-api"}[5m])) > 0.01
+            for: 5m
+            labels:
+              severity: warning
+              service: nowait-api
+            annotations:
+              summary: "[⚠️ P1 주요 경고] API 5xx 에러율 증가"
+              description: "서비스: nowait-api / 조건: 5xx 비율 > 1% (5분 지속) / 현재값: {{ $value | humanizePercentage }}"
+
+          - alert: APIp95응답시간지연
+            expr: |
+              histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job="nowait-api",uri!~"/actuator.*"}[5m])) by (le)) > 1
+            for: 5m
+            labels:
+              severity: warning
+              service: nowait-api
+            annotations:
+              summary: "[⚠️ P1 주요 경고] API p95 응답시간 지연"
+              description: "서비스: nowait-api / 조건: p95 응답시간 > 1초 (5분 지속) / 현재값: {{ $value | printf "%.2f" }}초"
+
+          - alert: Worker저장지연증가
+            expr: |
+              histogram_quantile(0.95, sum(rate(nowait_worker_persist_lag_seconds_bucket[5m])) by (le)) > 5
+            for: 5m
+            labels:
+              severity: warning
+              service: nowait-worker
+            annotations:
+              summary: "[⚠️ P1 주요 경고] Worker 저장 지연 증가"
+              description: "서비스: nowait-worker / 조건: Redis->DB 영속화 지연 p95 > 5초 / 현재값: {{ $value | printf "%.2f" }}초"
+
+          - alert: Worker저장실패증가
+            expr: |
+              (sum(rate(nowait_worker_persist_failure_total[5m]))
+                / (sum(rate(nowait_worker_persist_success_total[5m])) + sum(rate(nowait_worker_persist_failure_total[5m])))) > 0.005
+              and
+              (sum(rate(nowait_worker_persist_success_total[5m])) + sum(rate(nowait_worker_persist_failure_total[5m]))) > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: nowait-worker
+            annotations:
+              summary: "[⚠️ P1 주요 경고] Worker 저장 실패 증가"
+              description: "서비스: nowait-worker / 조건: 실패율 > 0.5% / 현재값: {{ $value | humanizePercentage }}"
+
+          - alert: DeadLetter발생
+            expr: max(waiting_queue_deadletter) > 0
+            for: 0m
+            labels:
+              severity: warning
+              service: nowait-worker
+            annotations:
+              summary: "[⚠️ P1 주요 경고] Dead Letter 발생"
+              description: "서비스: nowait-worker / 조건: 격리 큐 적재 건수 > 0 / 현재값: {{ $value | printf "%.0f" }}건"
+
+          - alert: DB커넥션대기발생
+            expr: sum(hikaricp_connections_pending{namespace="nowait-dev"}) > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: nowait-api
+            annotations:
+              summary: "[⚠️ P1 주요 경고] DB 커넥션 대기 발생"
+              description: "서비스: nowait-api / HikariCP 커넥션을 풀에서 획득하지 못해 대기 중인 스레드가 감지되었습니다."
+
+          - alert: PendingPod지속발생
+            expr: sum(kube_pod_status_phase{namespace="nowait-dev",phase="Pending"}) > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: kubernetes
+            annotations:
+              summary: "[⚠️ P1 주요 경고] Pending Pod 지속 발생"
+              description: "자원 할당 한도 포화 또는 노드 스케줄링 불능으로 대기 중인 파드가 감지되었습니다."
+
+          - alert: Deployment가용Replica부족
+            expr: |
+              kube_deployment_status_replicas_available{namespace="nowait-dev",deployment=~"nowait-.*",deployment!="nowait-api"}
+                < kube_deployment_spec_replicas{namespace="nowait-dev",deployment=~"nowait-.*",deployment!="nowait-api"}
+            for: 5m
+            labels:
+              severity: warning
+              service: kubernetes
+            annotations:
+              summary: "[⚠️ P1 주요 경고] Deployment 가용 Replica 부족"
+              description: "대상 워크로드: {{ $labels.deployment }} / 요청된 수치보다 켜져 있는 컨테이너 인스턴스가 부족합니다."
