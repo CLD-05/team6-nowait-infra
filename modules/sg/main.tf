@@ -106,3 +106,22 @@ resource "aws_security_group_rule" "rds_from_bastion" {
   protocol    = "tcp"
   description = "Allow Bastion to access RDS MySQL for debugging"
 }
+
+# ----------------------------------------
+# Redis access from Bastion
+#
+# 운영 디버깅(k6 부하테스트 후 캐시/큐 데이터 정리 등)을 위해
+# Bastion SG에서 Redis 6379 포트 접근을 허용합니다.
+# ----------------------------------------
+resource "aws_security_group_rule" "redis_from_bastion" {
+  count = var.bastion_enabled ? 1 : 0
+
+  type                     = "ingress"
+  security_group_id        = aws_security_group.redis.id
+  source_security_group_id = aws_security_group.bastion[0].id
+
+  from_port   = 6379
+  to_port     = 6379
+  protocol    = "tcp"
+  description = "Allow Bastion to access ElastiCache Redis for debugging"
+}
