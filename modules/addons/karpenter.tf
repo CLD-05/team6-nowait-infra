@@ -249,7 +249,11 @@ resource "helm_release" "karpenter" {
     {
       name  = "settings.clusterName"
       value = var.cluster_name
-    }
+    },
+    {
+    name  = "settings.clusterEndpoint"
+    value = data.aws_eks_cluster.this.endpoint
+   }
   ]
 
   depends_on = [
