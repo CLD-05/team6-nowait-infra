@@ -342,6 +342,11 @@ resource "kubernetes_manifest" "karpenter_nodepool_default" {
               key      = "kubernetes.io/arch"
               operator = "In"
               values   = ["amd64"]
+            },
+            {
+              key      = "topology.kubernetes.io/zone"
+              operator = "In"
+              values   = ["ap-northeast-2a", "ap-northeast-2b"]
             }
           ]
           nodeClassRef = {
