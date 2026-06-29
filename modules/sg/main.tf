@@ -8,14 +8,6 @@ resource "aws_security_group" "rds" {
   description = "Allow MySQL from EKS nodes only"
   vpc_id      = var.vpc_id
 
-  ingress {
-    description     = "MySQL from EKS nodes"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [var.eks_source_security_group_id]
-  }
-
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-rds-sg"
   })
@@ -31,16 +23,44 @@ resource "aws_security_group" "redis" {
   description = "Allow Redis from EKS nodes only"
   vpc_id      = var.vpc_id
 
-  ingress {
-    description     = "Redis from EKS nodes"
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [var.eks_source_security_group_id]
-  }
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-redis-sg"
   })
+}
+
+# ----------------------------------------
+# RDS access from EKS nodes
+#
+# 인라인 ingress 블록과 aws_security_group_rule(rds_from_bastion 등)을
+# 같은 SG에 혼용하면 Terraform이 매 plan마다 인라인 블록 밖의 규칙을
+# "관리 대상 아님"으로 보고 삭제하려는 충돌이 생긴다. 그래서 EKS 노드
+# 규칙도 별도 aws_security_group_rule로 통일한다.
+# ----------------------------------------
+resource "aws_security_group_rule" "rds_from_eks" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.rds.id
+  source_security_group_id = var.eks_source_security_group_id
+
+  from_port   = 3306
+  to_port     = 3306
+  protocol    = "tcp"
+  description = "MySQL from EKS nodes"
+}
+
+# ----------------------------------------
+# Redis access from EKS nodes
+#
+# 위와 동일한 이유로 인라인 ingress 대신 별도 리소스로 분리.
+# ----------------------------------------
+resource "aws_security_group_rule" "redis_from_eks" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.redis.id
+  source_security_group_id = var.eks_source_security_group_id
+
+  from_port   = 6379
+  to_port     = 6379
+  protocol    = "tcp"
+  description = "Redis from EKS nodes"
 }
 
 # ----------------------------------------
