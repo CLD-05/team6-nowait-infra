@@ -40,6 +40,13 @@ prometheus:
       limits:
         cpu: 1000m
         memory: 2Gi
+    tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "monitoring"
+        effect: "NoSchedule"
+    nodeSelector:
+      dedicated: monitoring
 
 # -------------------------------------------------------------------------
 # 2. 그라파나 대시보드 화면 및 AWS 연동 설정
@@ -60,6 +67,13 @@ grafana:
     limits:
       cpu: 500m
       memory: 512Mi
+  tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "monitoring"
+      effect: "NoSchedule"
+  nodeSelector:
+    dedicated: monitoring
   ingress:
     enabled: true
     ingressClassName: alb
