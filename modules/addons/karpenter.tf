@@ -246,11 +246,15 @@ resource "helm_release" "karpenter" {
   ] : []
 
   set = [
-    {
-      name  = "settings.clusterName"
-      value = var.cluster_name
-    }
-  ]
+  {
+    name  = "settings.clusterName"
+    value = var.cluster_name
+  },
+  {
+    name  = "settings.clusterEndpoint"
+    value = var.cluster_endpoint
+  }
+]
 
   depends_on = [
     kubernetes_namespace.karpenter,
@@ -304,6 +308,47 @@ resource "kubernetes_manifest" "karpenter_ec2nodeclass_default" {
   ]
 }
 
+resource "kubernetes_manifest" "karpenter_ec2nodeclass_monitoring" {
+  count = var.enable_karpenter ? 1 : 0
+
+  manifest = {
+    apiVersion = "karpenter.k8s.aws/v1"
+    kind       = "EC2NodeClass"
+    metadata = {
+      name = "monitoring"
+    }
+    spec = {
+      amiSelectorTerms = [
+        { alias = "al2023@latest" }
+      ]
+      role = aws_iam_role.karpenter_node[0].name
+      subnetSelectorTerms = [
+        {
+          tags = {
+            "karpenter.sh/discovery" = var.cluster_name
+          }
+        }
+      ]
+      securityGroupSelectorTerms = [
+        {
+          tags = {
+            "karpenter.sh/discovery" = var.cluster_name
+          }
+        }
+      ]
+      tags = {
+        Team                     = var.team
+        Name                     = "team6-nowait-prod-monitoring-node"
+        "karpenter.sh/discovery" = var.cluster_name
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.karpenter
+  ]
+}
+
 # -------------------------------------------------------------------
 # Karpenter NodePool (default)
 #
@@ -338,6 +383,11 @@ resource "kubernetes_manifest" "karpenter_nodepool_default" {
               key      = "kubernetes.io/arch"
               operator = "In"
               values   = ["amd64"]
+            },
+            {
+              key      = "topology.kubernetes.io/zone"
+              operator = "In"
+              values   = ["ap-northeast-2a", "ap-northeast-2b"]
             }
           ]
           nodeClassRef = {
@@ -364,3 +414,75 @@ resource "kubernetes_manifest" "karpenter_nodepool_default" {
   ]
 }
 
+# -------------------------------------------------------------------
+# Karpenter NodePool (monitoring)
+#
+# Grafana/Prometheus가 부하테스트 트래픽과 같은 노드에서 OOMKilled/Evicted
+# 되는 문제를 막기 위해 전용 노드를 분리한다. taint로 다른 워크로드 스케줄을
+# 막고, monitoring 파드 쪽에 toleration+nodeSelector를 매칭한다.
+# -------------------------------------------------------------------
+resource "kubernetes_manifest" "karpenter_nodepool_monitoring" {
+  count = var.enable_karpenter ? 1 : 0
+
+  manifest = {
+    apiVersion = "karpenter.sh/v1"
+    kind       = "NodePool"
+    metadata = {
+      name = "monitoring"
+    }
+    spec = {
+      template = {
+        metadata = {
+          labels = {
+            dedicated = "monitoring"
+          }
+        }
+        spec = {
+          requirements = [
+            {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["t3.medium"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["on-demand"]
+            },
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["amd64"]
+            }
+          ]
+          taints = [
+            {
+              key    = "dedicated"
+              value  = "monitoring"
+              effect = "NoSchedule"
+            }
+          ]
+
+          nodeClassRef = {
+            group = "karpenter.k8s.aws"
+            kind  = "EC2NodeClass"
+            name  = "monitoring"
+          }
+        }
+      }
+      limits = {
+        cpu    = "4"
+        memory = "8Gi"
+      }
+      disruption = {
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
+        consolidateAfter    = "5m"
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.karpenter_ec2nodeclass_monitoring,
+    helm_release.karpenter
+  ]
+}
