@@ -308,7 +308,7 @@ resource "kubernetes_manifest" "karpenter_ec2nodeclass_default" {
 # Karpenter NodePool (default)
 #
 # 부하테스트 기간 동안 prod 근접 사양(m6i.large)으로도 노드를 띄울 수 있도록
-# t3.large/m6i.large만 허용한다. spot은 제외(on-demand만) — 테스트 중 변동성을
+# m6i.large만 허용한다. spot은 제외(on-demand만) — 테스트 중 변동성을
 #배제하기 위함. 트래픽이 빠지면 consolidation으로 자동 회수한다.
 # -------------------------------------------------------------------
 resource "kubernetes_manifest" "karpenter_nodepool_default" {
@@ -327,7 +327,7 @@ resource "kubernetes_manifest" "karpenter_nodepool_default" {
             {
               key      = "node.kubernetes.io/instance-type"
               operator = "In"
-              values   = ["t3.large", "m6i.large"]
+              values   = ["m6i.large"]
             },
             {
               key      = "karpenter.sh/capacity-type"
