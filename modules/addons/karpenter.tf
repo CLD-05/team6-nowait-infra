@@ -364,3 +364,74 @@ resource "kubernetes_manifest" "karpenter_nodepool_default" {
   ]
 }
 
+# -------------------------------------------------------------------
+# Karpenter NodePool (monitoring)
+#
+# Grafana/Prometheus가 부하테스트 트래픽과 같은 노드에서 OOMKilled/Evicted
+# 되는 문제를 막기 위해 전용 노드를 분리한다. taint로 다른 워크로드 스케줄을
+# 막고, monitoring 파드 쪽에 toleration+nodeSelector를 매칭한다.
+# -------------------------------------------------------------------
+resource "kubernetes_manifest" "karpenter_nodepool_monitoring" {
+  count = var.enable_karpenter ? 1 : 0
+
+  manifest = {
+    apiVersion = "karpenter.sh/v1"
+    kind       = "NodePool"
+    metadata = {
+      name = "monitoring"
+    }
+    spec = {
+      template = {
+        metadata = {
+          labels = {
+            dedicated = "monitoring"
+          }
+        }
+        spec = {
+          requirements = [
+            {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["t3.medium"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["on-demand"]
+            },
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["amd64"]
+            }
+          ]
+          taints = [
+            {
+              key    = "dedicated"
+              value  = "monitoring"
+              effect = "NoSchedule"
+            }
+          ]
+          nodeClassRef = {
+            group = "karpenter.k8s.aws"
+            kind  = "EC2NodeClass"
+            name  = "default"
+          }
+        }
+      }
+      limits = {
+        cpu    = "4"
+        memory = "8Gi"
+      }
+      disruption = {
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
+        consolidateAfter    = "5m"
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.karpenter_ec2nodeclass_default,
+    helm_release.karpenter
+  ]
+}
