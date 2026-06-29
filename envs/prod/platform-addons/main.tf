@@ -44,6 +44,7 @@ module "addons" {
   enable_karpenter        = var.enable_karpenter
   karpenter_chart_version = var.karpenter_chart_version
   karpenter_values_file   = "${path.module}/helm-values/karpenter-values.yaml"
+  cluster_endpoint        = data.aws_eks_cluster.this.endpoint
 
   # Redis Exporter (ElastiCache 메트릭)
   enable_redis_exporter                = var.enable_redis_exporter

@@ -201,6 +201,11 @@ variable "karpenter_chart_version" {
   default     = null
 }
 
+variable "cluster_endpoint" {
+  description = "EKS cluster API server endpoint"
+  type        = string
+}
+
 variable "karpenter_values_file" {
   description = "Path to Karpenter Helm values file"
   type        = string
