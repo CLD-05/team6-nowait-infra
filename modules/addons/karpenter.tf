@@ -246,15 +246,15 @@ resource "helm_release" "karpenter" {
   ] : []
 
   set = [
-    {
-      name  = "settings.clusterName"
-      value = var.cluster_name
-    },
-    {
+  {
+    name  = "settings.clusterName"
+    value = var.cluster_name
+  },
+  {
     name  = "settings.clusterEndpoint"
-    value = data.aws_eks_cluster.this.endpoint
-   }
-  ]
+    value = var.cluster_endpoint
+  }
+]
 
   depends_on = [
     kubernetes_namespace.karpenter,
