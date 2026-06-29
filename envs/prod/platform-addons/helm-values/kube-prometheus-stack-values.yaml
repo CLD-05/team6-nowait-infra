@@ -1,3 +1,4 @@
+
 # =========================================================================
 # AWS EKS 환경에서 접근 불가능한 마스터 노드 컴포넌트 감시 해제
 # =========================================================================
@@ -60,6 +61,7 @@ grafana:
     accessModes:
       - ReadWriteOnce
     size: 5Gi
+
   resources:
     requests:
       cpu: 100m
@@ -67,13 +69,16 @@ grafana:
     limits:
       cpu: 500m
       memory: 512Mi
+
   tolerations:
     - key: "dedicated"
       operator: "Equal"
       value: "monitoring"
       effect: "NoSchedule"
+
   nodeSelector:
     dedicated: monitoring
+
   ingress:
     enabled: true
     ingressClassName: alb
@@ -83,9 +88,9 @@ grafana:
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/healthcheck-path: /api/health
       alb.ingress.kubernetes.io/healthcheck-port: "3000"
-  hosts: []
-  path: /
-  pathType: Prefix
+    hosts: []
+    path: /
+    pathType: Prefix
 
   # AWS RDS(MySQL) 및 ElastiCache(Redis) 모니터링을 위한 CloudWatch 연동
   additionalDataSources:
@@ -109,6 +114,7 @@ grafana:
 # -------------------------------------------------------------------------
 alertmanager:
   enabled: true
+
   alertmanagerSpec:
     replicas: 1
     resources:
@@ -162,6 +168,7 @@ alertmanager:
 
     receivers:
       - name: "null"
+
       - name: slack-notifications
         slack_configs:
           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/url
@@ -192,13 +199,25 @@ alertmanager:
         target_matchers: ["severity = warning"]
         equal: ["service", "namespace"]
 
-      # 3. Redis Eviction 발생 시 워커/큐 관련 종속 경고 억제
+      # 3. NoWait scrape job 전체 down 발생 시 개별 target down 경고 억제
+      - source_matchers: ['alertname = "NowaitScrapeJobAllDown"']
+        target_matchers: ['alertname = "NowaitScrapeTargetDown"']
+        equal: ["namespace", "job"]
+
+      # 4. Redis Eviction 발생 시 워커/큐 관련 종속 경고 억제
       - source_matchers: ['alertname = "RedisEviction발생"']
         target_matchers: ['alertname =~ "Worker저장지연증가|Worker저장실패증가|DeadLetter발생|DeadLetter지속적재|WorkerPendingQueue적체|WorkerProcessingQueue정체"']
 
-      # 4. nowait-api 가용 Replica 부족 시 하위 K8s 경고 중복 억제
-      - source_matchers: ['alertname = "nowaitapi가용Replica부족"']
+      # 5-1. nowait-api P0 발생 시 nowait-api replica 부족 P1 억제
+      - source_matchers: ['alertname =~ "nowaitapi가용Replica없음|nowaitapi가용Replica절반미만"']
+        target_matchers: ['alertname = "nowaitapi가용Replica부족"']
+        equal: ["namespace", "service"]
+
+      # 5-2. nowait-api P0 발생 시 하위 Kubernetes 경고 억제
+      # PendingPod지속발생 / Deployment가용Replica부족은 service 라벨이 kubernetes이므로 namespace 기준으로만 억제
+      - source_matchers: ['alertname =~ "nowaitapi가용Replica없음|nowaitapi가용Replica절반미만"']
         target_matchers: ['alertname =~ "PendingPod지속발생|Deployment가용Replica부족"']
+        equal: ["namespace"]
 
 # -------------------------------------------------------------------------
 # 4. NoWait 정밀 슬랙 알람 규칙 (P0 Critical / P1 Warning)
@@ -209,60 +228,40 @@ additionalPrometheusRulesMap:
       # ============================ P0 긴급 장애 (Critical) ============================
       - name: nowait-p0-critical
         rules:
-          - alert: InstanceDown
-            expr: up{namespace="nowait-prod"} == 0
-            for: 1m
+          # ---------------------------------------------------------------------
+          # Scrape 전체 장애
+          # ---------------------------------------------------------------------
+          - alert: NowaitScrapeJobAllDown
+            expr: |
+              sum by (namespace, job) (
+                up{namespace="nowait-prod",job=~"nowait-api|waiting-worker|reservation-worker"}
+              ) == 0
+            for: 3m
             labels:
               severity: critical
               namespace: nowait-prod
-              service: kubernetes
+              service: prometheus-target
             annotations:
-              summary: "🚨 [NoWait 비상] prod 대상 scrape down"
+              summary: "[🔥 P0 긴급 장애] NoWait scrape job 전체 down"
               description: |
                 환경: prod
-                조건: nowait-prod 네임스페이스의 scrape 대상이 1분 이상 응답하지 않음
-                대상: {{ $labels.job }} / {{ $labels.instance }}
-                영향: 해당 대상의 메트릭 수집이 중단되어 장애 감지가 제한될 수 있습니다.
+                조건: 특정 NoWait job의 모든 scrape target이 3분 이상 down
+                대상 job: {{ $labels.job }}
+                영향: 해당 컴포넌트 전체의 메트릭 수집이 중단되었습니다.
+                우선 확인: Deployment/Pod 상태, Service/ServiceMonitor, actuator endpoint, 최근 배포 여부
 
-          - alert: 대기등록성공률급락
-            expr: |
-              (
-                sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
-                /
-                clamp_min(
-                  sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
-                  +
-                  sum(rate(nowait_waiting_register_failure_total{namespace="nowait-prod"}[5m])),
-                  1e-9
-                )
-              ) < 0.99
-              and
-              (
-                sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
-                +
-                sum(rate(nowait_waiting_register_failure_total{namespace="nowait-prod"}[5m]))
-              ) > 0
-            for: 5m
-            labels:
-              severity: critical
-              namespace: nowait-prod
-              service: nowait-api
-            annotations:
-              summary: "[🔥 P0 긴급 장애] 대기 등록 성공률 급락"
-              description: |
-                서비스: nowait-api / 환경: prod
-                조건: 대기 등록 성공률 < 99% (5분 지속)
-                현재값: {{ $value | humanizePercentage }}
-                영향: 사용자가 대기 등록에 실패하고 있습니다.
-                우선 확인: 1. API 5xx 에러율 / 2. POST /waitings 응답시간 / 3. Redis 상태 / 4. Dead Letter 적체
-                대시보드: http://k8s-monitori-kubeprom-391f767428-2134982071.ap-northeast-2.elb.amazonaws.com/d/nowait-core-ops
-
+          # ---------------------------------------------------------------------
+          # API 장애
+          # ---------------------------------------------------------------------
           - alert: API5xx에러율높음
             expr: |
               (
                 sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api",status=~"5.."}[5m]))
                 /
-                clamp_min(sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])), 1e-9)
+                clamp_min(
+                  sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])),
+                  1e-9
+                )
               ) > 0.05
               and
               sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])) > 0.1
@@ -302,6 +301,9 @@ additionalPrometheusRulesMap:
                 영향: 폴링 지연으로 인해 사용자 UI 상태 갱신이 크게 늦어질 수 있습니다.
                 우선 확인: DB 커넥션 풀, Redis 지연, 특정 URI p95, CPU throttling, 최근 배포 여부
 
+          # ---------------------------------------------------------------------
+          # Redis / 데이터 유실 위험
+          # ---------------------------------------------------------------------
           - alert: RedisEviction발생
             expr: sum(increase(redis_evicted_keys_total[5m])) > 0
             for: 0m
@@ -358,28 +360,84 @@ additionalPrometheusRulesMap:
                 영향: Redis에는 작업이 쌓이고 있으나 DB 영속화가 대량으로 지연되고 있습니다.
                 우선 확인: KEDA 스케일링, Worker Pod 수, Worker 로그, DB 커넥션 대기, RDS CPU/Connection, Redis 상태
 
-          - alert: nowaitapi가용Replica부족
+          # ---------------------------------------------------------------------
+          # nowait-api 가용성
+          # ---------------------------------------------------------------------
+          - alert: nowaitapi가용Replica없음
             expr: |
-              kube_deployment_status_replicas_available{namespace="nowait-prod",deployment="nowait-api"}
-              <
-              kube_deployment_spec_replicas{namespace="nowait-prod",deployment="nowait-api"}
-            for: 3m
+              kube_deployment_status_replicas_available{namespace="nowait-prod",deployment="nowait-api"} == 0
+              and on(namespace, deployment)
+              kube_deployment_spec_replicas{namespace="nowait-prod",deployment="nowait-api"} > 0
+            for: 2m
             labels:
               severity: critical
               namespace: nowait-prod
               service: nowait-api
             annotations:
-              summary: "[🔥 P0 긴급 장애] nowait-api 가용 Replica 부족"
+              summary: "[🔥 P0 긴급 장애] nowait-api 가용 Replica 없음"
               description: |
                 서비스: nowait-api / 환경: prod
-                조건: 가용 파드 수 < 배포 목표치 (3분 지속)
-                현재 가용: {{ $value | printf "%.0f" }}개
-                영향: 서빙 가능한 API Pod가 부족하여 사용자 요청 처리량과 가용성이 떨어집니다.
-                우선 확인: CrashLoopBackOff, ImagePullBackOff, readinessProbe 실패, CPU/Memory 부족, 노드 스케줄링 상태
+                조건: nowait-api 가용 Pod가 2분 이상 0개
+                영향: 사용자 API 요청을 처리할 수 없습니다.
+                우선 확인: CrashLoopBackOff, ImagePullBackOff, readinessProbe 실패, 노드 스케줄링 실패, 최근 배포 여부
+
+          - alert: nowaitapi가용Replica절반미만
+            expr: |
+              (
+                kube_deployment_status_replicas_available{namespace="nowait-prod",deployment="nowait-api"}
+                /
+                clamp_min(
+                  kube_deployment_spec_replicas{namespace="nowait-prod",deployment="nowait-api"},
+                  1
+                )
+              ) < 0.5
+              and on(namespace)
+              (
+                sum by(namespace) (
+                  rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])
+                ) > 0.1
+              )
+            for: 5m
+            labels:
+              severity: critical
+              namespace: nowait-prod
+              service: nowait-api
+            annotations:
+              summary: "[🔥 P0 긴급 장애] nowait-api 가용 Replica 절반 미만"
+              description: |
+                서비스: nowait-api / 환경: prod
+                조건: 요청이 있는 상태에서 가용 Replica 비율 < 50% (5분 지속)
+                영향: API 처리 용량이 크게 부족합니다.
+                우선 확인: HPA, Pending Pod, readiness 실패, CPU/Memory 부족, Karpenter 증설 지연
 
       # ============================ P1 주요 경고 (Warning) ============================
       - name: nowait-p1-warning
         rules:
+          # ---------------------------------------------------------------------
+          # Scrape 개별 target 장애
+          # ---------------------------------------------------------------------
+          - alert: NowaitScrapeTargetDown
+            expr: |
+              up{namespace="nowait-prod",job=~"nowait-api|waiting-worker|reservation-worker"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              namespace: nowait-prod
+              service: prometheus-target
+            annotations:
+              summary: "[⚠️ P1 주요 경고] NoWait scrape target down"
+              description: |
+                환경: prod
+                조건: NoWait scrape target이 5분 이상 응답하지 않음
+                대상 job: {{ $labels.job }}
+                대상 instance: {{ $labels.instance }}
+                대상 pod: {{ $labels.pod }}
+                영향: 해당 Pod의 메트릭 수집이 중단되었습니다.
+                우선 확인: Pod 상태, /actuator/prometheus 응답, ServiceMonitor selector, 최근 스케일링/재시작 여부
+
+          # ---------------------------------------------------------------------
+          # 노드 / 리소스
+          # ---------------------------------------------------------------------
           - alert: HighCpuUsage
             expr: |
               sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (node)
@@ -400,12 +458,18 @@ additionalPrometheusRulesMap:
                 현재값: {{ $value | printf "%.1f" }}%
                 우선 확인: kubectl top nodes, Karpenter 증설 여부, 특정 Pod CPU 사용률
 
+          # ---------------------------------------------------------------------
+          # API 조기 경고
+          # ---------------------------------------------------------------------
           - alert: API5xx에러율증가
             expr: |
               (
                 sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api",status=~"5.."}[5m]))
                 /
-                clamp_min(sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])), 1e-9)
+                clamp_min(
+                  sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])),
+                  1e-9
+                )
               ) > 0.01
               and
               sum(rate(http_server_requests_seconds_count{namespace="nowait-prod",job="nowait-api"}[5m])) > 0.1
@@ -443,13 +507,57 @@ additionalPrometheusRulesMap:
                 현재값: {{ $value | printf "%.2f" }}초
                 우선 확인: URI별 p95, HikariCP pending/acquire time, Redis 지연, CPU throttling
 
+          - alert: 대기등록성공률저하
+            expr: |
+              (
+                sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
+                /
+                clamp_min(
+                  sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
+                  +
+                  sum(rate(nowait_waiting_register_failure_total{namespace="nowait-prod"}[5m])),
+                  1e-9
+                )
+              ) < 0.99
+              and
+              (
+                sum(rate(nowait_waiting_register_success_total{namespace="nowait-prod"}[5m]))
+                +
+                sum(rate(nowait_waiting_register_failure_total{namespace="nowait-prod"}[5m]))
+              ) > 0
+            for: 10m
+            labels:
+              severity: warning
+              namespace: nowait-prod
+              service: nowait-api
+            annotations:
+              summary: "[⚠️ P1 주요 경고] 대기 등록 성공률 저하"
+              description: |
+                서비스: nowait-api / 환경: prod
+                조건: 대기 등록 성공률 < 99% (10분 지속)
+                현재값: {{ $value | humanizePercentage }}
+                주의: failure metric에 정원 초과/중복 등록 같은 정상 4xx가 포함되어 있다면 오탐 가능성이 있습니다.
+                우선 확인: API 5xx 에러율, POST /waitings 응답시간, Redis 상태, failure reason metric 설계
+
+          # ---------------------------------------------------------------------
+          # Worker / Queue
+          # ---------------------------------------------------------------------
           - alert: Worker저장지연증가
             expr: |
-              histogram_quantile(
-                0.95,
-                sum(rate(nowait_worker_persist_lag_seconds_bucket{namespace="nowait-prod"}[5m])) by (le)
-              ) > 5
-            for: 5m
+              (
+                histogram_quantile(
+                  0.95,
+                  sum(rate(nowait_worker_persist_lag_seconds_bucket{namespace="nowait-prod"}[5m])) by (le)
+                ) > 5
+              )
+              and
+              (
+                max(waiting_queue_pending{namespace="nowait-prod"})
+                +
+                max(reservation_queue_pending{namespace="nowait-prod"})
+                > 50
+              )
+            for: 10m
             labels:
               severity: warning
               namespace: nowait-prod
@@ -458,9 +566,9 @@ additionalPrometheusRulesMap:
               summary: "[⚠️ P1 주요 경고] Worker 저장 지연 증가"
               description: |
                 서비스: nowait-worker / 환경: prod
-                조건: Redis → DB 영속화 지연 p95 > 5초 (5분 지속)
+                조건: Redis → DB 영속화 지연 p95 > 5초이고 pending queue > 50인 상태가 10분 지속
                 현재값: {{ $value | printf "%.2f" }}초
-                우선 확인: pending queue, processing queue, DB 커넥션 대기, Worker Pod 수
+                우선 확인: pending queue, processing queue, DB 커넥션 대기, Worker Pod 수, KEDA 스케일링
 
           - alert: Worker저장실패증가
             expr: |
@@ -552,6 +660,9 @@ additionalPrometheusRulesMap:
                 영향: Worker가 작업을 가져간 뒤 완료 처리하지 못하고 있을 수 있습니다.
                 우선 확인: Worker Pod 재시작, DB timeout, 예외 로그, processing queue 복구 로직
 
+          # ---------------------------------------------------------------------
+          # DB / Redis 조기 경고
+          # ---------------------------------------------------------------------
           - alert: DB커넥션대기발생
             expr: sum(hikaricp_connections_pending{namespace="nowait-prod"}) > 0
             for: 5m
@@ -583,6 +694,28 @@ additionalPrometheusRulesMap:
                 현재값: {{ $value | humanizePercentage }}
                 영향: 메모리 여유가 줄어 Eviction 위험이 커집니다.
                 우선 확인: pending/processing/dead-letter queue 길이, TTL 설정, Redis maxmemory 정책
+
+          # ---------------------------------------------------------------------
+          # Kubernetes / Autoscaling
+          # ---------------------------------------------------------------------
+          - alert: nowaitapi가용Replica부족
+            expr: |
+              kube_deployment_status_replicas_available{namespace="nowait-prod",deployment="nowait-api"}
+              <
+              kube_deployment_spec_replicas{namespace="nowait-prod",deployment="nowait-api"}
+            for: 10m
+            labels:
+              severity: warning
+              namespace: nowait-prod
+              service: nowait-api
+            annotations:
+              summary: "[⚠️ P1 주요 경고] nowait-api 가용 Replica 부족"
+              description: |
+                서비스: nowait-api / 환경: prod
+                조건: 가용 파드 수 < 배포 목표치 (10분 지속)
+                현재 가용: {{ $value | printf "%.0f" }}개
+                영향: HPA scale-out, readiness 지연, 리소스 부족 등으로 목표 Replica만큼 준비되지 않았습니다.
+                우선 확인: HPA 상태, Pending Pod, readinessProbe 실패, CPU/Memory 부족, Karpenter 증설 상태
 
           - alert: PendingPod지속발생
             expr: sum(kube_pod_status_phase{namespace="nowait-prod",phase="Pending"}) > 0
@@ -638,3 +771,5 @@ additionalPrometheusRulesMap:
                 조건: 현재 Replica 수가 maxReplicas에 10분 이상 도달
                 영향: 더 이상 Pod 수평 확장이 되지 않아 API/Worker 처리량 한계에 도달했을 수 있습니다.
                 우선 확인: HPA maxReplicas, KEDA ScaledObject, 노드 증설, API 응답시간, pending queue
+
+
