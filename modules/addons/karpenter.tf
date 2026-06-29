@@ -462,9 +462,7 @@ resource "kubernetes_manifest" "karpenter_nodepool_monitoring" {
               effect = "NoSchedule"
             }
           ]
-           tags = {
-            Name = "team6-nowait-prod-monitoring-node"
-          }
+
           nodeClassRef = {
             group = "karpenter.k8s.aws"
             kind  = "EC2NodeClass"
