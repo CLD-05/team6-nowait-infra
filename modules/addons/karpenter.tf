@@ -359,6 +359,10 @@ resource "kubernetes_manifest" "karpenter_ec2nodeclass_monitoring" {
 resource "kubernetes_manifest" "karpenter_nodepool_default" {
   count = var.enable_karpenter ? 1 : 0
 
+  field_manager {
+    force_conflicts = true
+  }
+
   manifest = {
     apiVersion = "karpenter.sh/v1"
     kind       = "NodePool"
